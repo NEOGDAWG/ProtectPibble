@@ -9,6 +9,12 @@ from app.db.sqlite_schema import ensure_sqlite_columns
 
 settings = get_settings()
 
+# Log CORS configuration for debugging
+import logging
+logger = logging.getLogger(__name__)
+logger.info(f"CORS origins configured: {settings.cors_origins}")
+logger.info(f"CORS origin regex: {settings.cors_allow_origin_regex}")
+
 app = FastAPI(
     title=settings.app_name,
     description="ProtectPibble - Collaborative class pet accountability app",
