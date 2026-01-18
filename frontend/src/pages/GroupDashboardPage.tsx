@@ -100,6 +100,32 @@ function formatLocalDateTime(iso: string) {
   }
 }
 
+function getPSTOffset(year: number, month: number, day: number): number {
+  // Get the timezone offset for a specific date in America/Los_Angeles
+  // Returns the offset in hours (negative: -8 for PST, -7 for PDT)
+  // Use Intl to get the actual offset for this date
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
+  
+  // Get what time it is in PST/PDT when it's 12:00 UTC
+  const pstFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  
+  const pstParts = pstFormatter.formatToParts(utcDate)
+  const pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '12', 10)
+  
+  // Calculate offset: if UTC is 12:00 and PST is 4:00, offset is -8
+  // If UTC is 12:00 and PDT is 5:00, offset is -7
+  let offset = pstHour - 12
+  if (offset > 6) offset -= 24 // Handle day rollover
+  if (offset < -12) offset += 24
+  
+  return offset
+}
+
 function formatEnumValue(value: string): string {
   // Convert SNAKE_CASE to Title Case
   return value
@@ -203,9 +229,9 @@ export function GroupDashboardPage() {
 
   const createTaskMutation = useMutation({
     mutationFn: () => {
-      // Convert datetime-local input to PST time, then to ISO string
+      // Convert datetime-local input to PST/PDT time, then to UTC ISO string
       // datetime-local gives us a string like "2026-01-18T06:57" with no timezone
-      // We need to interpret this as PST (America/Los_Angeles) time
+      // We need to interpret this as PST/PDT (America/Los_Angeles) time and convert to UTC
       
       if (!taskDue) {
         throw new Error('Due date is required')
@@ -220,30 +246,20 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // User enters time in PST - convert to UTC for storage
-      // PST is UTC-8, so to convert PST to UTC we ADD 8 hours
-      // Input: 7:40 AM PST -> Store as 15:40 UTC (7:40 + 8 = 15:40)
-      let utcHour = hours + 8
-      let utcDay = day
-      let utcMonth = month - 1
-      let utcYear = year
+      // Get the timezone offset for this specific date (handles DST automatically)
+      const offsetHours = getPSTOffset(year, month, day)
       
-      // Handle day rollover if hour goes over 24
-      if (utcHour >= 24) {
-        utcHour -= 24
-        utcDay += 1
-        const daysInMonth = new Date(utcYear, utcMonth + 1, 0).getDate()
-        if (utcDay > daysInMonth) {
-          utcDay = 1
-          utcMonth += 1
-          if (utcMonth >= 12) {
-            utcMonth = 0
-            utcYear += 1
-          }
-        }
-      }
-      
-      const utcDate = new Date(Date.UTC(utcYear, utcMonth, utcDay, utcHour, minutes, 0))
+      // Create UTC date: PST/PDT time - offset = UTC time
+      // If input is 6:57 AM PST (UTC-8, offset = -8), UTC is 6:57 - (-8) = 14:57 (2:57 PM)
+      // If input is 6:57 AM PDT (UTC-7, offset = -7), UTC is 6:57 - (-7) = 13:57 (1:57 PM)
+      const utcDate = new Date(Date.UTC(
+        year,
+        month - 1,
+        day,
+        hours - offsetHours, // offsetHours is negative (-8 or -7), so subtracting it adds the hours
+        minutes,
+        0
+      ))
       
       return api.createTask(groupId, {
         title: taskTitle,
