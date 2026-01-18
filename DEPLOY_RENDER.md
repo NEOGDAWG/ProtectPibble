@@ -28,7 +28,17 @@ Since Railway is giving you trouble, let's use **Render** instead - it's often s
    - **Plan**: Free (for testing)
 3. Click **"Create Database"**
 4. Wait 2-3 minutes for database to provision
-5. Copy the **"Internal Database URL"** - you'll need this!
+
+### Find the Internal Database URL
+
+1. Click on your PostgreSQL service
+2. Go to **"Info"** tab (default)
+3. Scroll down to **"Connections"** section
+4. Find **"Internal Database URL"** (not External!)
+5. Click the copy icon (📋) to copy it
+6. It looks like: `postgresql://user:pass@host/dbname`
+
+**See `FIND_RENDER_DATABASE_URL.md` for detailed instructions with screenshots guidance.**
 
 ## Step 3: Deploy Backend
 
