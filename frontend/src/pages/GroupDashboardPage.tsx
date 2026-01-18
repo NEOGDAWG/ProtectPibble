@@ -463,7 +463,7 @@ export function GroupDashboardPage() {
         </div>
 
         {/* Floating Pet Section */}
-        <div className="mb-6 flex flex-col items-center">
+        <div className="mb-6 flex flex-col items-center" style={{ marginTop: '-75px' }}>
           <img
             src={petImageSrc}
             alt={data.pet.name}
