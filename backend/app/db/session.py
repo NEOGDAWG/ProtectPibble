@@ -34,10 +34,18 @@ if not requested_url.startswith("sqlite"):
     try:
         with engine.connect():
             pass
-    except Exception:  # noqa: BLE001
+        print(f"[protectpibble] Successfully connected to database: {requested_url.split('@')[1] if '@' in requested_url else 'connected'}", file=sys.stderr)
+    except Exception as e:  # noqa: BLE001
         print(
-            "[protectpibble] DATABASE_URL unreachable; falling back to local SQLite "
-            "(backend/protectpibble.sqlite3).",
+            f"[protectpibble] DATABASE_URL unreachable: {type(e).__name__}: {str(e)}",
+            file=sys.stderr,
+        )
+        print(
+            f"[protectpibble] DATABASE_URL was: {requested_url[:50]}..." if len(requested_url) > 50 else f"[protectpibble] DATABASE_URL was: {requested_url}",
+            file=sys.stderr,
+        )
+        print(
+            "[protectpibble] Falling back to local SQLite (backend/protectpibble.sqlite3).",
             file=sys.stderr,
         )
         engine = _make_engine("sqlite:///./protectpibble.sqlite3")
