@@ -24,7 +24,10 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
  * Returns a Date object that can be compared (using getTime()) with other PST dates
  */
 function toPSTDate(isoString: string): Date {
-  const utcDate = new Date(isoString)
+  // Ensure the ISO string is treated as UTC
+  const utcIso = ensureUTC(isoString)
+  const utcDate = new Date(utcIso)
+  
   if (Number.isNaN(utcDate.getTime())) {
     return new Date(0) // Return epoch if invalid
   }
@@ -132,15 +135,42 @@ function isDaylightTime(date: Date): boolean {
 }
 
 /**
+ * Ensure an ISO string is treated as UTC
+ * If the string doesn't have timezone info, assume it's UTC
+ */
+function ensureUTC(iso: string): string {
+  // If it already has timezone info (Z or +/- offset), return as-is
+  if (iso.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(iso)) {
+    return iso
+  }
+  // If it doesn't have timezone info, append 'Z' to indicate UTC
+  // Handle formats: "2024-01-18T15:00:00" or "2024-01-18T15:00:00.123"
+  if (iso.includes('T')) {
+    // Remove any trailing milliseconds and append Z
+    const withoutMs = iso.replace(/\.\d+$/, '')
+    return withoutMs + 'Z'
+  }
+  return iso
+}
+
+/**
  * Format a UTC ISO string for display in PST/PDT
  * Always shows the correct timezone abbreviation (PST or PDT)
+ * The input ISO string should be in UTC (from backend)
  */
 function formatLocalDateTime(iso: string): string {
   try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
+    // Ensure the ISO string is treated as UTC
+    const utcIso = ensureUTC(iso)
+    const d = new Date(utcIso)
+    
+    if (Number.isNaN(d.getTime())) {
+      console.warn('Invalid date:', iso)
+      return iso
+    }
     
     // Format in PST/PDT timezone
+    // Intl.DateTimeFormat will automatically convert from UTC to PST/PDT
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/Los_Angeles',
       month: 'short',
@@ -165,6 +195,7 @@ function formatLocalDateTime(iso: string): string {
     
     return `${month} ${day}, ${year}, ${hour}:${minute} ${dayPeriod} ${timeZoneName}`
   } catch (error) {
+    console.error('Error formatting date:', iso, error)
     return iso
   }
 }
