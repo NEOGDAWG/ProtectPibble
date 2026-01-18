@@ -1,0 +1,10 @@
+backend/
+scripts/
+.env
+*.sqlite3
+*.db
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.git/

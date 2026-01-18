@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Optional
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,11 +24,21 @@ class Settings(BaseSettings):
     clerk_jwks_url: str = ""
 
     # Frontend dev server ports may change (Vite uses next free port).
-    cors_origins: list[str] = [
+    # Production origins should be set via CORS_ORIGINS env var (comma-separated)
+    # e.g., CORS_ORIGINS=https://yourapp.vercel.app,https://www.yourapp.com
+    cors_origins: str | list[str] = [
         "http://127.0.0.1:5173",
         "http://localhost:5173",
     ]
     cors_allow_origin_regex: Optional[str] = r"^http://(localhost|127\.0\.0\.1):\d+$"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str):
+            # Parse comma-separated string
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
 
 @lru_cache

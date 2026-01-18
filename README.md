@@ -42,10 +42,23 @@ docker compose up -d
 - **Backend docs**: `http://127.0.0.1:8000/docs`
 - **Frontend**: `http://127.0.0.1:5173`
 
+## Deployment
+
+To deploy online so multiple people can access it:
+
+📖 **See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide**
+
+Quick summary:
+- **Frontend**: Deploy to [Vercel](https://vercel.com) (free tier available)
+- **Backend + Database**: Deploy to [Railway](https://railway.app) - it provides both! (free tier available)
+
+The app supports multiple users joining the same class project via invite codes. Each group has shared tasks that everyone needs to complete to keep the pet healthy.
+
 ## Notes
 
 - This setup matches the architecture in `HACKATHON.docx` / `HACKATHON.pdf` (React + FastAPI + Postgres + worker).
 - Auth is intended to use **Clerk** (see `env.example` placeholders).
+- For production deployment, see `DEPLOYMENT.md`.
 
 ## MVP API (backend)
 
