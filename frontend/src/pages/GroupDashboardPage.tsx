@@ -18,17 +18,16 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  // Format in PST timezone
-  return d.toLocaleString('en-US', {
-    timeZone: 'America/Los_Angeles',
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-    timeZoneName: 'short',
-  })
+  // Display the time exactly as stored (no timezone conversion)
+  // The time is stored as UTC but represents the exact time the user entered
+  const year = d.getUTCFullYear()
+  const month = d.toLocaleString('en-US', { month: 'short' })
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const hour = d.getUTCHours()
+  const minute = String(d.getUTCMinutes()).padStart(2, '0')
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${month} ${day}, ${year}, ${String(hour12).padStart(2, '0')}:${minute} ${ampm} PST`
 }
 
 function formatEnumValue(value: string): string {
@@ -152,58 +151,17 @@ export function GroupDashboardPage() {
       const [hours, minutes] = timePart.split(':').map(Number)
       
       // The datetime-local input gives us a time without timezone (e.g., "2026-01-18T07:18")
-      // We need to interpret this as PST time and convert it to UTC for storage
-      // 
-      // Strategy: Use an iterative approach to find the UTC time that, when displayed in PST,
-      // equals the time the user entered. This handles DST transitions correctly.
+      // User wants this stored and displayed exactly as entered (7:20 AM = 7:20 AM, no conversion)
+      // For the backend deadline logic to work, we need to store it in UTC, but we'll store it
+      // in a way that represents the exact time the user entered when converted back.
       //
-      // PST is UTC-8, so if user enters 07:18 AM PST, we need to store 15:18 UTC (07:18 + 8 hours)
-      // But we need to handle DST (PDT = UTC-7) correctly, so we use iteration.
+      // Since the user is in PST and wants no conversion, we'll store the time as UTC
+      // by treating the input as if it were already in UTC (no offset applied).
+      // This way, when we display it, we can show it exactly as entered.
       
-      // Start with initial guess: PST is UTC-8, so UTC = PST + 8 hours
-      // If user enters 07:18 AM PST, UTC is 15:18 (07:18 + 8)
-      let utcDate = new Date(Date.UTC(year, month - 1, day, hours + 8, minutes, 0))
-      
-      // Iteratively adjust until the PST representation matches the input
-      // This automatically handles DST transitions
-      for (let attempts = 0; attempts < 20; attempts++) {
-        // Check what PST time this UTC date represents
-        const pstParts = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'America/Los_Angeles',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        }).formatToParts(utcDate)
-        
-        const pstYear = parseInt(pstParts.find(p => p.type === 'year')?.value || '0')
-        const pstMonth = parseInt(pstParts.find(p => p.type === 'month')?.value || '0')
-        const pstDay = parseInt(pstParts.find(p => p.type === 'day')?.value || '0')
-        const pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '0')
-        const pstMinute = parseInt(pstParts.find(p => p.type === 'minute')?.value || '0')
-        
-        // If it matches exactly, we're done
-        if (pstYear === year && pstMonth === month && pstDay === day && pstHour === hours && pstMinute === minutes) {
-          break
-        }
-        
-        // Calculate the difference between desired and actual PST time
-        // If displayed PST is ahead of input, we need to subtract from UTC
-        // If displayed PST is behind input, we need to add to UTC
-        const hourDiff = hours - pstHour
-        const minuteDiff = minutes - pstMinute
-        const totalMinutesDiff = hourDiff * 60 + minuteDiff
-        
-        // If no difference, break to avoid infinite loop
-        if (totalMinutesDiff === 0) {
-          break
-        }
-        
-        // Adjust the UTC date by the difference
-        utcDate = new Date(utcDate.getTime() + totalMinutesDiff * 60 * 1000)
-      }
+      // Store the time directly as UTC (treating input as naive UTC time)
+      // This means 7:20 AM input = 7:20 AM UTC stored = 7:20 AM displayed
+      const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
       
       return api.createTask(groupId, {
         title: taskTitle,
