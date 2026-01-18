@@ -438,8 +438,8 @@ export function GroupDashboardPage() {
   const petImageSrc = getPetImage(data.pet.health, data.pet.maxHealth)
 
   return (
-    <div className="min-h-full px-6 py-8" style={{ backgroundColor: '#cae0ee' }}>
-      <div className="mx-auto max-w-6xl">
+    <div className="h-screen overflow-hidden px-6 py-8" style={{ backgroundColor: '#cae0ee' }}>
+      <div className="mx-auto h-full max-w-6xl flex flex-col">
         {/* Centered ProtectPibble Title */}
         <div className="mb-8 text-center">
           <h1 className="text-5xl font-normal" style={{ color: '#314479' }}>ProtectPibble</h1>
@@ -484,12 +484,12 @@ export function GroupDashboardPage() {
         </div>
 
         {/* Main content grid */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 flex-1 min-h-0">
           {/* Left column - Tasks */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 flex flex-col min-h-0">
 
             {/* Tasks Section */}
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#f2f7fa' }}>
+            <div className="rounded-2xl p-6 flex flex-col min-h-0" style={{ backgroundColor: '#f2f7fa' }}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-normal" style={{ color: '#314479' }}>Tasks</h2>
                 <div className="flex gap-2">
@@ -638,7 +638,7 @@ export function GroupDashboardPage() {
                 </form>
               ) : null}
 
-              <div className="grid gap-3">
+              <div className="grid gap-3 flex-1 overflow-y-auto rounded-b-2xl -mx-6 -mb-6 px-6 pb-6" style={{ maxHeight: 'calc(100vh - 500px)' }}>
                 {filteredAndSortedTasks.length === 0 ? (
                   <div className="rounded-xl p-4 text-center font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>
                     {data.tasks.length === 0
@@ -813,13 +813,13 @@ export function GroupDashboardPage() {
           </div>
 
           {/* Right column - Leaderboard and Activity */}
-          <div className="space-y-6">
+          <div className="space-y-6 flex flex-col min-h-0">
 
             {/* Leaderboard */}
             {data.group.mode === 'FRIEND' && data.leaderboard?.length ? (
-              <div className="rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+              <div className="rounded-2xl p-5 flex flex-col min-h-0" style={{ backgroundColor: '#f2f7fa' }}>
                 <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Leaderboard</h2>
-                <div className="grid gap-2">
+                <div className="grid gap-2 overflow-y-auto rounded-b-2xl -mx-5 -mb-5 px-5 pb-5" style={{ maxHeight: '120px' }}>
                   {data.leaderboard.map((row, idx) => (
                     <div
                       key={row.user.id}
@@ -839,9 +839,9 @@ export function GroupDashboardPage() {
             ) : null}
 
             {/* Activity Log */}
-            <div className="rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+            <div className="rounded-2xl p-5 flex flex-col flex-1 min-h-0" style={{ backgroundColor: '#f2f7fa' }}>
               <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Activity Log</h2>
-              <div className="grid gap-2">
+              <div className="grid gap-2 overflow-y-auto rounded-b-2xl flex-1 -mx-5 -mb-5 px-5 pb-5" style={{ maxHeight: 'calc(100vh - 700px)' }}>
                 {data.recentEvents.length === 0 ? (
                   <div className="rounded-xl p-4 text-center font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>
                     Activity will appear here.
