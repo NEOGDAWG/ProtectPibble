@@ -49,10 +49,12 @@ export type DemoIdentity = {
 }
 
 export function getDemoIdentity(): DemoIdentity | null {
+  // Check for JWT token first
   const token = getAuthToken()
   if (token) {
     return { email: token.user.email, name: token.user.displayName }
   }
+  // Fallback to legacy demo auth
   const email = localStorage.getItem(EMAIL_KEY) || ''
   const name = localStorage.getItem(NAME_KEY) || ''
   if (!email.trim()) return null

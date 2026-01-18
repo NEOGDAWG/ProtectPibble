@@ -13,7 +13,8 @@ from app.db.session import get_db
 from app.models.user import User
 from app.utils.jwt import decode_access_token
 
-security = HTTPBearer()
+# Make HTTPBearer optional so demo auth can still work
+security = HTTPBearer(auto_error=False)
 
 
 @dataclass(frozen=True)
