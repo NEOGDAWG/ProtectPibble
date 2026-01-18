@@ -13,7 +13,7 @@ psycopg[binary]>=3.2.0,<4.0.0
 
 # Auth (JWT + Password Hashing)
 python-jose[cryptography]>=3.3.0,<4.0.0
-passlib[bcrypt]>=1.7.4,<2.0.0
+bcrypt>=4.0.0,<5.0.0
 python-multipart>=0.0.9,<1.0.0
 
 # Worker (optional, for “resume-worthy” background jobs)
