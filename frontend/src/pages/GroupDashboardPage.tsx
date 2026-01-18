@@ -446,7 +446,7 @@ export function GroupDashboardPage() {
         </div>
 
         {/* Header with group name and back button */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-3 flex items-start justify-between">
           <div>
             <h2 className="text-3xl font-normal" style={{ color: '#314479' }}>{data.group.name}</h2>
             <p className="mt-1 text-lg font-normal" style={{ color: '#5e9bd4' }}>
