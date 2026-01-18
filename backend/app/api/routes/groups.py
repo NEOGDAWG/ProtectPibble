@@ -186,7 +186,31 @@ def delete_group(
     if group.created_by_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the group creator can delete the group")
     
-    # Delete the group (cascade will handle related records)
+    # Delete related records first to avoid constraint issues
+    # Delete all tasks for this group
+    from app.models.task import Task
+    db.execute(select(Task).where(Task.group_id == group_uuid)).scalars().all()
+    tasks = db.scalars(select(Task).where(Task.group_id == group_uuid)).all()
+    for task in tasks:
+        db.delete(task)
+    
+    # Delete all events for this group
+    from app.models.event import Event
+    events = db.scalars(select(Event).where(Event.group_id == group_uuid)).all()
+    for event in events:
+        db.delete(event)
+    
+    # Delete all memberships for this group
+    memberships = db.scalars(select(GroupMembership).where(GroupMembership.group_id == group_uuid)).all()
+    for membership in memberships:
+        db.delete(membership)
+    
+    # Delete the pet
+    pet = db.scalar(select(Pet).where(Pet.group_id == group_uuid))
+    if pet:
+        db.delete(pet)
+    
+    # Finally delete the group itself
     db.delete(group)
     db.commit()
     return {"ok": True}
