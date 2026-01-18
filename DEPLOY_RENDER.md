@@ -69,13 +69,19 @@ Since Railway is giving you trouble, let's use **Render** instead - it's often s
 
 ## Step 4: Run Database Migrations
 
-1. Once backend is deployed, go to **"Shell"** tab
-2. Click **"Open Shell"**
-3. Run:
+1. Once backend is deployed, click on the **"Shell"** tab in your backend service
+2. Click **"Open Shell"** button (opens terminal in browser)
+3. In the shell, navigate to backend directory:
+   ```bash
+   cd backend
+   ```
+4. Run migrations:
    ```bash
    alembic upgrade head
    ```
-4. Should see: `Running upgrade  -> 0001_create_mvp_tables`
+5. Should see: `INFO  [alembic.runtime.migration] Running upgrade  -> 0001_create_mvp_tables`
+
+**See `RUN_MIGRATIONS_RENDER.md` for detailed step-by-step instructions with screenshots guidance.**
 
 ## Step 5: Get Your Backend URL
 
