@@ -48,8 +48,8 @@ async function apiFetch<TResponse>(
 
   if (!res.ok) {
     // Handle 401 Unauthorized - token expired or invalid
-    if (res.status === 401) {
-      // Clear invalid token
+    if (res.status === 401 && path !== '/auth/login' && path !== '/auth/register') {
+      // Clear invalid token (but not for login/register endpoints)
       clearAuthToken()
       // Redirect to login will be handled by the component
     }

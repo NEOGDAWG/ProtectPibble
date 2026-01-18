@@ -81,14 +81,31 @@ export function RegisterPage() {
   return (
     <div className="mx-auto flex min-h-full max-w-lg flex-col gap-6 px-6 py-10">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Create Account</h1>
-        <p className="text-slate-300">
-          Already have an account?{' '}
-          <Link to="/login" className="text-blue-400 hover:text-blue-300 underline">
-            Sign in
-          </Link>
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">Welcome to ProtectPibble</h1>
+        <p className="text-slate-300">Create a new account or sign in to existing one</p>
       </header>
+
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <Button variant="secondary" className="w-full" disabled>
+            Create Account
+          </Button>
+        </div>
+        <Link to="/login" className="flex-1">
+          <Button variant="primary" className="w-full">
+            Sign In
+          </Button>
+        </Link>
+      </div>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-700"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-slate-950 px-2 text-slate-400">Or register with email</span>
+        </div>
+      </div>
 
       <form className="rounded-xl border border-slate-800 bg-slate-900/40 p-5" onSubmit={handleSubmit}>
         <div className="grid gap-4">
@@ -150,7 +167,13 @@ export function RegisterPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-400">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-400 hover:text-blue-300 underline">
+                Sign in here
+              </Link>
+            </p>
             <Button type="submit" variant="primary" disabled={registerMutation.isPending}>
               {registerMutation.isPending ? 'Creating Account...' : 'Create Account'}
             </Button>

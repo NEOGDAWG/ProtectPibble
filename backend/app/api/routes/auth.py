@@ -68,25 +68,26 @@ def login(
     # Find user
     user = db.scalar(select(User).where(User.email == body.email.lower().strip()))
     if user is None:
-        # Don't reveal if email exists or not (security best practice)
+        # User requested specific error message for account not found
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="No account found with this email. Please register first.",
         )
 
     # Verify password
     if not user.password_hash:
         # User exists but has no password (legacy demo user)
-        # Require them to set a password or use demo auth
+        # Require them to set a password
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="This account needs to be set up. Please register with a password.",
         )
     
     if not verify_password(body.password, user.password_hash):
+        # Email exists but password is wrong
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Incorrect password. Please try again.",
         )
 
     # Create access token
