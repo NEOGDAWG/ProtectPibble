@@ -89,14 +89,58 @@ function getPSTNow(): Date {
 }
 
 /**
- * Format a UTC ISO string for display in PST
+ * Determine if a date in PST/PDT timezone is in daylight saving time
+ * Returns true if PDT (daylight time), false if PST (standard time)
+ * Uses a reliable method: check what timezone name the browser returns
+ */
+function isDaylightTime(date: Date): boolean {
+  // Try to get timezone name from formatter - this is the most reliable
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    timeZoneName: 'short',
+  })
+  
+  const parts = formatter.formatToParts(date)
+  const tzName = parts.find(p => p.type === 'timeZoneName')?.value || ''
+  
+  // If browser returns PDT or PST explicitly, use that
+  if (tzName.toUpperCase().includes('PDT')) return true
+  if (tzName.toUpperCase().includes('PST')) return false
+  
+  // Fallback: Use a known date in summer (PDT) and winter (PST) to determine offset
+  // Create a test date at UTC noon on the same date
+  const testUtcNoon = new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    12, 0, 0
+  ))
+  
+  // Get what hour it is in PST/PDT at UTC noon
+  const pstParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(testUtcNoon)
+  
+  const pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '4', 10)
+  
+  // At UTC noon:
+  // - PST = 4am (offset -8 hours)
+  // - PDT = 5am (offset -7 hours)
+  return pstHour === 5
+}
+
+/**
+ * Format a UTC ISO string for display in PST/PDT
+ * Always shows the correct timezone abbreviation (PST or PDT)
  */
 function formatLocalDateTime(iso: string): string {
   try {
     const d = new Date(iso)
     if (Number.isNaN(d.getTime())) return iso
     
-    // Format in PST/PDT
+    // Format in PST/PDT timezone
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/Los_Angeles',
       month: 'short',
@@ -105,7 +149,6 @@ function formatLocalDateTime(iso: string): string {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
-      timeZoneName: 'short',
     })
     
     const parts = formatter.formatToParts(d)
@@ -115,7 +158,10 @@ function formatLocalDateTime(iso: string): string {
     const hour = parts.find(p => p.type === 'hour')?.value || ''
     const minute = parts.find(p => p.type === 'minute')?.value || ''
     const dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value?.toUpperCase() || ''
-    const timeZoneName = parts.find(p => p.type === 'timeZoneName')?.value || 'PST'
+    
+    // Determine if it's PST or PDT
+    const isDST = isDaylightTime(d)
+    const timeZoneName = isDST ? 'PDT' : 'PST'
     
     return `${month} ${day}, ${year}, ${hour}:${minute} ${dayPeriod} ${timeZoneName}`
   } catch (error) {
