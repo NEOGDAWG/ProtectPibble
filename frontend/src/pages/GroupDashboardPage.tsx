@@ -18,31 +18,32 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  // Convert UTC back to PST for display - ADD 8 hours
+  // Convert UTC back to PST for display - SUBTRACT 8 hours
+  // PST is UTC-8, so to convert UTC to PST we SUBTRACT 8 hours
   let utcHour = d.getUTCHours()
   let utcMinute = d.getUTCMinutes()
   let utcYear = d.getUTCFullYear()
   let utcMonth = d.getUTCMonth()
   let utcDay = d.getUTCDate()
   
-  // Add 8 hours to convert UTC to PST
-  let pstHour = utcHour + 8
+  // Subtract 8 hours to convert UTC to PST
+  let pstHour = utcHour - 8
   let pstDay = utcDay
   let pstMonth = utcMonth
   let pstYear = utcYear
   
-  // Handle day rollover
-  if (pstHour >= 24) {
-    pstHour -= 24
-    pstDay += 1
-    const daysInMonth = new Date(pstYear, pstMonth + 1, 0).getDate()
-    if (pstDay > daysInMonth) {
-      pstDay = 1
-      pstMonth += 1
-      if (pstMonth >= 12) {
-        pstMonth = 0
-        pstYear += 1
+  // Handle day rollover if hour goes negative
+  if (pstHour < 0) {
+    pstHour += 24
+    pstDay -= 1
+    if (pstDay < 1) {
+      pstMonth -= 1
+      if (pstMonth < 0) {
+        pstMonth = 11
+        pstYear -= 1
       }
+      const daysInMonth = new Date(pstYear, pstMonth + 1, 0).getDate()
+      pstDay = daysInMonth
     }
   }
   
@@ -174,26 +175,26 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // User enters time in PST - we need to SUBTRACT 8 hours to store it correctly
-      // Input: 7:40 AM PST -> Store as 23:40 UTC previous day (7:40 - 8 = -0:20, so previous day 23:40)
-      // Actually, simpler: store PST time by subtracting 8 hours from the hour
-      let utcHour = hours - 8
+      // User enters time in PST - convert to UTC for storage
+      // PST is UTC-8, so to convert PST to UTC we ADD 8 hours
+      // Input: 7:40 AM PST -> Store as 15:40 UTC (7:40 + 8 = 15:40)
+      let utcHour = hours + 8
       let utcDay = day
       let utcMonth = month - 1
       let utcYear = year
       
-      // Handle day rollover if hour goes negative
-      if (utcHour < 0) {
-        utcHour += 24
-        utcDay -= 1
-        if (utcDay < 1) {
-          utcMonth -= 1
-          if (utcMonth < 0) {
-            utcMonth = 11
-            utcYear -= 1
+      // Handle day rollover if hour goes over 24
+      if (utcHour >= 24) {
+        utcHour -= 24
+        utcDay += 1
+        const daysInMonth = new Date(utcYear, utcMonth + 1, 0).getDate()
+        if (utcDay > daysInMonth) {
+          utcDay = 1
+          utcMonth += 1
+          if (utcMonth >= 12) {
+            utcMonth = 0
+            utcYear += 1
           }
-          const daysInMonth = new Date(utcYear, utcMonth + 1, 0).getDate()
-          utcDay = daysInMonth
         }
       }
       
