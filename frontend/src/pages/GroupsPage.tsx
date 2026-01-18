@@ -94,7 +94,7 @@ export function GroupsPage() {
           <img
             src={pibbleLogo}
             alt="Pibble"
-            className="h-12 w-12 object-contain"
+            className="h-16 w-16 object-contain"
           />
           <h1 className="text-5xl font-normal" style={{ color: '#314479' }}>ProtectPibble</h1>
         </div>
