@@ -155,8 +155,8 @@ export function GroupsPage() {
                       <label className="flex flex-col gap-1 text-sm">
                         <span className="font-normal" style={{ color: '#314479' }}>Mode</span>
                         <select
-                          className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
-                          style={{ color: '#5e9bd4' }}
+                          className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal border focus:outline-none focus:ring-2"
+                          style={{ color: '#5e9bd4', borderColor: '#5b9cd4' }}
                           value={createForm.mode}
                           onChange={(e) => setCreateForm((p) => ({ ...p, mode: e.target.value as GroupMode }))}
                         >

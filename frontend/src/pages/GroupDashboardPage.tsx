@@ -516,8 +516,8 @@ export function GroupDashboardPage() {
                     <label className="flex flex-col gap-1 text-sm">
                       <span className="font-normal" style={{ color: '#314479' }}>Due date</span>
                       <select
-                        className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
-                        style={{ color: '#5e9bd4' }}
+                        className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal border focus:outline-none focus:ring-2"
+                        style={{ color: '#5e9bd4', borderColor: '#5b9cd4' }}
                         value={dueFilter}
                         onChange={(e) => setDueFilter(e.target.value as DueFilter)}
                       >
@@ -547,8 +547,8 @@ export function GroupDashboardPage() {
                     <label className="flex flex-col gap-1 text-sm">
                       <span className="font-normal" style={{ color: '#314479' }}>Sort by</span>
                       <select
-                        className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
-                        style={{ color: '#5e9bd4' }}
+                        className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal border focus:outline-none focus:ring-2"
+                        style={{ color: '#5e9bd4', borderColor: '#5b9cd4' }}
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortBy)}
                       >
@@ -748,8 +748,8 @@ export function GroupDashboardPage() {
                                 <label className="flex flex-col gap-1 text-sm">
                                   <span className="font-normal" style={{ color: '#314479' }}>Letter</span>
                                   <select
-                                    className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
-                                    style={{ color: '#5e9bd4' }}
+                                    className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal border focus:outline-none focus:ring-2"
+                                    style={{ color: '#5e9bd4', borderColor: '#5b9cd4' }}
                                     value={gradeLetter}
                                     onChange={(e) =>
                                       setGradeLetter(
