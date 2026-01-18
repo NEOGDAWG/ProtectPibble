@@ -10,6 +10,7 @@ import { Input } from '../components/Input'
 import { ModeBadge } from '../components/ModeBadge'
 import { queryClient } from '../queryClient'
 import { getPetImage } from '../utils/petImage'
+import pibbleLogo from '../assets/pets/pibble.png'
 
 export function GroupsPage() {
   const { identity, logout } = useAuth()
@@ -89,7 +90,12 @@ export function GroupsPage() {
     <div className="min-h-full px-6 py-8" style={{ backgroundColor: '#cae0ee' }}>
       <div className="mx-auto max-w-6xl">
         {/* Centered ProtectPibble Title */}
-        <div className="mb-8 text-center">
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <img
+            src={pibbleLogo}
+            alt="Pibble"
+            className="h-12 w-12 object-contain"
+          />
           <h1 className="text-5xl font-normal" style={{ color: '#314479' }}>ProtectPibble</h1>
         </div>
 
