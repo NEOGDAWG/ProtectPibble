@@ -12,14 +12,22 @@ class RegisterRequest(BaseModel):
     )
     
     email: EmailStr
-    # Accept both displayName (camelCase from frontend) and display_name (snake_case)
+    # Accept both displayName (camelCase) and display_name (snake_case)
+    # The frontend sends displayName, which gets converted to display_name by decamelizeKeys
+    # But we also accept displayName directly via alias for robustness
     display_name: str = Field(
         ...,
         min_length=1,
         max_length=120,
-        alias="displayName",  # This allows "displayName" as input
     )
     password: str = Field(..., min_length=8, max_length=100)
+    
+    # Allow displayName as an alternative field name
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        if isinstance(obj, dict) and "displayName" in obj and "display_name" not in obj:
+            obj = {**obj, "display_name": obj.pop("displayName")}
+        return super().model_validate(obj, **kwargs)
 
     @field_validator("password")
     @classmethod

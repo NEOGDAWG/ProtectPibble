@@ -34,7 +34,7 @@ def register(
     # Create new user
     password_hash = hash_password(body.password)
     user = User(
-        email=body.email.lower().strip(),
+        email=email,
         display_name=body.display_name.strip(),
         password_hash=password_hash,
     )
