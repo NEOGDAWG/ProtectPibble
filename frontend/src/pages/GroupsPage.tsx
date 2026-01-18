@@ -105,25 +105,134 @@ export function GroupsPage() {
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-normal" style={{ color: '#314479' }}>My groups</h2>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  setShowCreatePanel(!showCreatePanel)
-                  setShowJoinPanel(false)
-                }}
-                variant="primary"
-              >
-                {showCreatePanel ? 'Cancel' : 'Create Group'}
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowJoinPanel(!showJoinPanel)
-                  setShowCreatePanel(false)
-                }}
-                variant="primary"
-              >
-                {showJoinPanel ? 'Cancel' : 'Join Group'}
-              </Button>
+            <div className="relative flex gap-2">
+              <div className="relative">
+                <Button
+                  onClick={() => {
+                    setShowCreatePanel(!showCreatePanel)
+                    setShowJoinPanel(false)
+                  }}
+                  variant="primary"
+                >
+                  {showCreatePanel ? 'Cancel' : 'Create Group'}
+                </Button>
+                {/* Create Group Panel */}
+                {showCreatePanel && (
+                  <div className="absolute top-full right-0 mt-2 rounded-2xl p-5 w-fit z-50" style={{ backgroundColor: '#f2f7fa' }}>
+                    <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Create group</h2>
+                    <form
+                      className="grid gap-4"
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        createMutation.mutate(createForm)
+                      }}
+                    >
+                      <Input
+                        label="Class code"
+                        value={createForm.classCode}
+                        onChange={(e) => setCreateForm((p) => ({ ...p, classCode: e.target.value }))}
+                        placeholder="CPSC 313"
+                        required
+                      />
+                      <Input
+                        label="Term"
+                        value={createForm.term}
+                        onChange={(e) => setCreateForm((p) => ({ ...p, term: e.target.value }))}
+                        placeholder="2026W"
+                        required
+                      />
+                      <label className="flex flex-col gap-1 text-sm">
+                        <span className="font-normal" style={{ color: '#314479' }}>Mode</span>
+                        <select
+                          className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
+                          style={{ color: '#5e9bd4' }}
+                          value={createForm.mode}
+                          onChange={(e) => setCreateForm((p) => ({ ...p, mode: e.target.value as GroupMode }))}
+                        >
+                          <option value="FRIEND">Friend</option>
+                          <option value="INSTRUCTOR">Instructor</option>
+                        </select>
+                      </label>
+                      <Input
+                        label="Group name"
+                        value={createForm.groupName}
+                        onChange={(e) => setCreateForm((p) => ({ ...p, groupName: e.target.value }))}
+                        placeholder="Kabir's CPSC313"
+                        required
+                      />
+                      <Input
+                        label="Initial pet HP"
+                        type="number"
+                        min={1}
+                        max={1000}
+                        value={String(createForm.initialHealth ?? 100)}
+                        onChange={(e) => setCreateForm((p) => ({ ...p, initialHealth: Number(e.target.value) || 100 }))}
+                        required
+                      />
+                      {createMutation.error && (
+                        <p className="text-sm font-normal" style={{ color: '#ef8688' }}>{(createMutation.error as Error).message}</p>
+                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          type="button"
+                          onClick={() => setShowCreatePanel(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={!canCreate || createMutation.isPending}>
+                          {createMutation.isPending ? 'Creating…' : 'Create'}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <Button
+                  onClick={() => {
+                    setShowJoinPanel(!showJoinPanel)
+                    setShowCreatePanel(false)
+                  }}
+                  variant="primary"
+                >
+                  {showJoinPanel ? 'Cancel' : 'Join Group'}
+                </Button>
+                {/* Join Group Panel */}
+                {showJoinPanel && (
+                  <div className="absolute top-full right-0 mt-2 rounded-2xl p-5 w-fit z-50" style={{ backgroundColor: '#f2f7fa' }}>
+                    <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Join group</h2>
+                    <form
+                      className="grid gap-4"
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        joinMutation.mutate({ inviteCode })
+                      }}
+                    >
+                      <Input
+                        label="Invite code"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        placeholder="A1B2C3D"
+                        required
+                      />
+                      {joinMutation.error && (
+                        <p className="text-sm font-normal" style={{ color: '#ef8688' }}>{(joinMutation.error as Error).message}</p>
+                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          type="button"
+                          onClick={() => setShowJoinPanel(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={!inviteCode.trim() || joinMutation.isPending}>
+                          {joinMutation.isPending ? 'Joining…' : 'Join'}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           {isLoading && <p className="font-normal" style={{ color: '#5e9bd4' }}>Loading…</p>}
@@ -188,112 +297,6 @@ export function GroupsPage() {
           )}
         </div>
 
-        {/* Create Group Panel */}
-        {showCreatePanel && (
-          <div className="mb-6 rounded-2xl p-5 w-fit" style={{ backgroundColor: '#f2f7fa' }}>
-            <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Create group</h2>
-            <form
-              className="grid gap-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                createMutation.mutate(createForm)
-              }}
-            >
-              <Input
-                label="Class code"
-                value={createForm.classCode}
-                onChange={(e) => setCreateForm((p) => ({ ...p, classCode: e.target.value }))}
-                placeholder="CPSC 313"
-                required
-              />
-              <Input
-                label="Term"
-                value={createForm.term}
-                onChange={(e) => setCreateForm((p) => ({ ...p, term: e.target.value }))}
-                placeholder="2026W"
-                required
-              />
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-normal" style={{ color: '#314479' }}>Mode</span>
-                <select
-                  className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
-                  style={{ color: '#5e9bd4' }}
-                  value={createForm.mode}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, mode: e.target.value as GroupMode }))}
-                >
-                  <option value="FRIEND">Friend</option>
-                  <option value="INSTRUCTOR">Instructor</option>
-                </select>
-              </label>
-              <Input
-                label="Group name"
-                value={createForm.groupName}
-                onChange={(e) => setCreateForm((p) => ({ ...p, groupName: e.target.value }))}
-                placeholder="Kabir's CPSC313"
-                required
-              />
-              <Input
-                label="Initial pet HP"
-                type="number"
-                min={1}
-                max={1000}
-                value={String(createForm.initialHealth ?? 100)}
-                onChange={(e) => setCreateForm((p) => ({ ...p, initialHealth: Number(e.target.value) || 100 }))}
-                required
-              />
-              {createMutation.error && (
-                <p className="text-sm font-normal" style={{ color: '#ef8688' }}>{(createMutation.error as Error).message}</p>
-              )}
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  onClick={() => setShowCreatePanel(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" disabled={!canCreate || createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating…' : 'Create'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Join Group Panel */}
-        {showJoinPanel && (
-          <div className="mb-6 rounded-2xl p-5 w-fit" style={{ backgroundColor: '#f2f7fa' }}>
-            <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Join group</h2>
-            <form
-              className="grid gap-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                joinMutation.mutate({ inviteCode })
-              }}
-            >
-              <Input
-                label="Invite code"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                placeholder="A1B2C3D"
-                required
-              />
-              {joinMutation.error && (
-                <p className="text-sm font-normal" style={{ color: '#ef8688' }}>{(joinMutation.error as Error).message}</p>
-              )}
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  onClick={() => setShowJoinPanel(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" disabled={!inviteCode.trim() || joinMutation.isPending}>
-                  {joinMutation.isPending ? 'Joining…' : 'Join'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
       </div>
     </div>
   )
