@@ -454,7 +454,7 @@ export function GroupDashboardPage() {
             </p>
           </div>
           <Link
-            className="rounded-xl bg-[#f2f7fa] px-4 py-2 text-sm font-normal transition-opacity hover:opacity-90 relative z-10"
+            className="rounded-xl bg-[#f2f7fa] px-4 py-2 text-sm font-normal transition-all duration-200 ease-in-out shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 hover:bg-[#e8f0f5] hover:opacity-100 relative z-10"
             style={{ color: '#5e9bd4', pointerEvents: 'auto' }}
             to="/groups"
           >
