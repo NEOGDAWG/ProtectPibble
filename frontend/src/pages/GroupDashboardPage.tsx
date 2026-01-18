@@ -3,11 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 
 import { api } from '../api/client'
-import type { TaskStatusValue, TaskType } from '../api/types'
+import type { TaskState, TaskStatusValue, TaskType } from '../api/types'
 import { useAuth } from '../auth/useAuth'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
-import { ModeBadge } from '../components/ModeBadge'
 import { useGroupState } from '../hooks/useGroupState'
 import { queryClient } from '../queryClient'
 import { getPetImage } from '../utils/petImage'
@@ -218,23 +217,10 @@ export function GroupDashboardPage() {
   const params = useParams()
   const groupId = params.groupId || ''
 
-  const { data, isLoading, error, dataUpdatedAt } = useGroupState(groupId)
+  const { data, isLoading, error } = useGroupState(groupId)
 
   // Track current time in PST for comparisons
   const [pstNow, setPstNow] = useState(() => getPSTNow())
-  const [pstTime, setPstTime] = useState(() => {
-    const now = new Date()
-    return now.toLocaleString('en-US', {
-      timeZone: 'America/Los_Angeles',
-      hour12: false,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-  })
   const [showCreate, setShowCreate] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskType, setTaskType] = useState<TaskType>('ASSIGNMENT')
@@ -261,36 +247,16 @@ export function GroupDashboardPage() {
   const [gradePercent, setGradePercent] = useState('')
   const [gradeLetter, setGradeLetter] = useState<'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-' | 'D' | 'F'>('A')
 
-  // Update PST time every second
+  // Update PST time every second for date comparisons
   useEffect(() => {
     const updateClock = () => {
       setPstNow(getPSTNow())
-      // Update PST time string for display
-      const now = new Date()
-      const pstString = now.toLocaleString('en-US', {
-        timeZone: 'America/Los_Angeles',
-        hour12: false,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      })
-      setPstTime(pstString)
     }
     
     updateClock() // Update immediately
     const id = window.setInterval(updateClock, 1000)
     return () => window.clearInterval(id)
   }, [])
-
-  const secondsAgo = useMemo(() => {
-    if (!dataUpdatedAt) return null
-    const updatedDate = new Date(dataUpdatedAt)
-    const now = new Date()
-    return Math.floor((now.getTime() - updatedDate.getTime()) / 1000)
-  }, [dataUpdatedAt])
 
   const completeMutation = useMutation({
     mutationFn: (args: {
@@ -671,7 +637,7 @@ export function GroupDashboardPage() {
                       : 'No tasks match your filters.'}
                   </div>
                 ) : (
-                  filteredAndSortedTasks.map((t) => {
+                  filteredAndSortedTasks.map((t: TaskState) => {
                     // Check if overdue - compare in PST
                     const duePST = toPSTDate(t.dueAt)
                     const isOverdue = duePST < pstNow && !isDoneStatus(t.myStatus)
