@@ -22,11 +22,17 @@ class RegisterRequest(BaseModel):
     )
     password: str = Field(..., min_length=8, max_length=100)
     
-    # Allow displayName as an alternative field name
+    # Allow displayName as an alternative field name (fallback if decamelizeKeys fails)
     @classmethod
     def model_validate(cls, obj, **kwargs):
-        if isinstance(obj, dict) and "displayName" in obj and "display_name" not in obj:
-            obj = {**obj, "display_name": obj.pop("displayName")}
+        if isinstance(obj, dict):
+            # If displayName is present but display_name is not, convert it
+            if "displayName" in obj and "display_name" not in obj:
+                obj = {**obj, "display_name": obj.pop("displayName")}
+            # Also accept displayName as an alias
+            elif "displayName" in obj and "display_name" in obj:
+                # Both present, prefer display_name
+                obj.pop("displayName", None)
         return super().model_validate(obj, **kwargs)
 
     @field_validator("password")

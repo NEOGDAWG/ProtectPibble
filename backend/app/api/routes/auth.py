@@ -22,7 +22,11 @@ def register(
     """Register a new user with email and password. Authentication required for all other endpoints."""
     import logging
     logger = logging.getLogger(__name__)
-    logger.info(f"Register request received: email={body.email}, display_name={body.display_name}")
+    
+    try:
+        logger.info(f"Register request received: email={body.email}, display_name={body.display_name}")
+    except Exception as e:
+        logger.error(f"Error logging request: {e}")
     
     # Normalize email
     email = body.email.lower().strip()
@@ -47,11 +51,19 @@ def register(
         db.add(user)
         db.commit()
         db.refresh(user)
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
+        logger.error(f"Integrity error during registration: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error during registration: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}",
         )
 
     # Create access token
