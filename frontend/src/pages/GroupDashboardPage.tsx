@@ -16,43 +16,79 @@ type StatusFilter = 'ALL' | 'DONE' | 'NOT_DONE'
 type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 
 function formatLocalDateTime(iso: string) {
-  // Ensure the date string is treated as UTC
-  // FastAPI sends datetime as ISO strings - ensure we parse as UTC
-  let dateString = iso.trim()
-  
-  // If no timezone indicator, explicitly add 'Z' to indicate UTC
-  if (!dateString.endsWith('Z') && !dateString.match(/[+-]\d{2}:?\d{2}$/)) {
-    dateString = dateString + 'Z'
-  }
-  
-  // Create date object - this will be in UTC internally
-  const d = new Date(dateString)
-  if (Number.isNaN(d.getTime())) {
+  try {
+    // Parse ISO string - extract components to ensure UTC parsing
+    const dateString = iso.trim()
+    
+    // Match ISO 8601 format: YYYY-MM-DDTHH:mm:ss or YYYY-MM-DDTHH:mm:ss.sssZ
+    // or with timezone offset
+    const isoRegex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?(?:Z|([+-])(\d{2}):?(\d{2}))?$/
+    const match = dateString.match(isoRegex)
+    
+    let d: Date
+    
+    if (match) {
+      // Extract components
+      const [, year, month, day, hour, minute, second, millisecond, tzSign, tzHour, tzMinute] = match
+      
+      // Create UTC date explicitly using Date.UTC
+      // Note: month is 0-indexed in JavaScript Date
+      const utcTime = Date.UTC(
+        parseInt(year, 10),
+        parseInt(month, 10) - 1, // Month is 0-indexed
+        parseInt(day, 10),
+        parseInt(hour, 10),
+        parseInt(minute, 10),
+        parseInt(second, 10),
+        millisecond ? parseInt(millisecond, 10) : 0
+      )
+      
+      // If there's a timezone offset, adjust for it
+      if (tzSign && tzHour) {
+        const offsetHours = parseInt(tzHour, 10)
+        const offsetMinutes = tzMinute ? parseInt(tzMinute, 10) : 0
+        const offsetMs = (offsetHours * 60 + offsetMinutes) * 60 * 1000
+        const adjustedTime = tzSign === '+' ? utcTime - offsetMs : utcTime + offsetMs
+        d = new Date(adjustedTime)
+      } else {
+        // No timezone offset - treat as UTC
+        d = new Date(utcTime)
+      }
+    } else {
+      // Fallback: try parsing directly, but ensure UTC
+      const normalized = dateString.endsWith('Z') || dateString.match(/[+-]\d{2}:?\d{2}$/) 
+        ? dateString 
+        : dateString + 'Z'
+      d = new Date(normalized)
+    }
+    
+    if (Number.isNaN(d.getTime())) {
+      return iso
+    }
+    
+    // Convert UTC to PST/PDT using Intl.DateTimeFormat
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles',
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZoneName: 'short',
+    })
+    
+    // Format the date - converts from UTC to PST/PDT
+    const formatted = formatter.format(d)
+    
+    // Remove seconds if present
+    const cleaned = formatted.replace(/:\d{2}\s/, ' ')
+    
+    return cleaned
+  } catch (error) {
+    // If anything fails, return original string
     return iso
   }
-  
-  // Use Intl.DateTimeFormat to convert UTC to PST/PDT
-  // This is the most reliable way to handle timezone conversion with DST
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-    timeZoneName: 'short',
-  })
-  
-  // Format the date - this will automatically convert from UTC to PST/PDT
-  const formatted = formatter.format(d)
-  
-  // Extract components from formatted string
-  // Format will be like: "Jan 15, 2024, 02:30 PM PST" or "Jan 15, 2024, 02:30:00 PM PST"
-  // Remove seconds if present
-  const cleaned = formatted.replace(/:\d{2}\s/, ' ')
-  
-  return cleaned
 }
 
 function formatEnumValue(value: string): string {
