@@ -189,9 +189,13 @@ def delete_group(
     # Delete related records first to avoid constraint issues
     # Delete all tasks for this group
     from app.models.task import Task
-    db.execute(select(Task).where(Task.group_id == group_uuid)).scalars().all()
+    from app.models.task_status import TaskStatus
     tasks = db.scalars(select(Task).where(Task.group_id == group_uuid)).all()
     for task in tasks:
+        # Delete task statuses first
+        task_statuses = db.scalars(select(TaskStatus).where(TaskStatus.task_id == task.id)).all()
+        for task_status in task_statuses:
+            db.delete(task_status)
         db.delete(task)
     
     # Delete all events for this group
