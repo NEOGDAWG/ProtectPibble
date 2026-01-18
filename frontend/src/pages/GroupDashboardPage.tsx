@@ -18,41 +18,30 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  // Convert UTC back to PST for display - SUBTRACT 8 hours
-  // PST is UTC-8, so to convert UTC to PST we SUBTRACT 8 hours
-  let utcHour = d.getUTCHours()
-  let utcMinute = d.getUTCMinutes()
-  let utcYear = d.getUTCFullYear()
-  let utcMonth = d.getUTCMonth()
-  let utcDay = d.getUTCDate()
   
-  // Subtract 8 hours to convert UTC to PST
-  let pstHour = utcHour - 8
-  let pstDay = utcDay
-  let pstMonth = utcMonth
-  let pstYear = utcYear
+  // Convert UTC to PST/PDT using JavaScript's built-in timezone support
+  // This automatically handles daylight saving time (PST vs PDT)
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  })
   
-  // Handle day rollover if hour goes negative
-  if (pstHour < 0) {
-    pstHour += 24
-    pstDay -= 1
-    if (pstDay < 1) {
-      pstMonth -= 1
-      if (pstMonth < 0) {
-        pstMonth = 11
-        pstYear -= 1
-      }
-      const daysInMonth = new Date(pstYear, pstMonth + 1, 0).getDate()
-      pstDay = daysInMonth
-    }
-  }
+  const parts = formatter.formatToParts(d)
+  const month = parts.find(p => p.type === 'month')?.value || ''
+  const day = parts.find(p => p.type === 'day')?.value || ''
+  const year = parts.find(p => p.type === 'year')?.value || ''
+  const hour = parts.find(p => p.type === 'hour')?.value || ''
+  const minute = parts.find(p => p.type === 'minute')?.value || ''
+  const dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value?.toUpperCase() || ''
+  const timeZoneName = parts.find(p => p.type === 'timeZoneName')?.value || 'PST'
   
-  const month = new Date(pstYear, pstMonth, 1).toLocaleString('en-US', { month: 'short' })
-  const day = String(pstDay).padStart(2, '0')
-  const ampm = pstHour >= 12 ? 'PM' : 'AM'
-  const hour12 = pstHour % 12 || 12
-  const minute = String(utcMinute).padStart(2, '0')
-  return `${month} ${day}, ${pstYear}, ${String(hour12).padStart(2, '0')}:${minute} ${ampm} PST`
+  return `${month} ${day}, ${year}, ${hour}:${minute} ${dayPeriod} ${timeZoneName}`
 }
 
 function formatEnumValue(value: string): string {
