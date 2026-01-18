@@ -171,16 +171,24 @@ export function GroupDashboardPage() {
       // We'll use a simpler approach: create a date in local time that represents PST
       // Then convert it properly to UTC
       
-      // Create a date object for the target date/time in PST
-      // We'll create it as if it were in UTC, then adjust
-      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+      // The datetime-local input gives us a time without timezone
+      // We need to interpret it as PST and convert to UTC
+      // Strategy: Find the UTC time that, when displayed in PST, shows the entered time
       
-      // Use a helper: create a date that when formatted in PST gives us the desired time
-      // We'll iterate to find the right UTC time
-      let utcDate = new Date(`${dateStr}Z`) // Start with treating as UTC
+      // Check if DST is in effect for the target date
+      const testDate = new Date(year, month - 1, day, 12, 0, 0)
+      const pstTest = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Los_Angeles',
+        timeZoneName: 'short',
+      }).formatToParts(testDate)
+      const isDST = pstTest.find(p => p.type === 'timeZoneName')?.value === 'PDT'
+      const offsetHours = isDST ? 7 : 8 // PST is UTC-8, PDT is UTC-7
       
-      // Check what PST time this represents
-      let pstParts = new Intl.DateTimeFormat('en-US', {
+      // Create UTC date: add offset to get UTC time that represents our PST time
+      let utcDate = new Date(Date.UTC(year, month - 1, day, hours + offsetHours, minutes, 0))
+      
+      // Verify: check what PST time this UTC date represents
+      const verifyParts = new Intl.DateTimeFormat('en-US', {
         timeZone: 'America/Los_Angeles',
         year: 'numeric',
         month: '2-digit',
@@ -190,43 +198,18 @@ export function GroupDashboardPage() {
         hour12: false,
       }).formatToParts(utcDate)
       
-      let pstYear = parseInt(pstParts.find(p => p.type === 'year')?.value || '0')
-      let pstMonth = parseInt(pstParts.find(p => p.type === 'month')?.value || '0')
-      let pstDay = parseInt(pstParts.find(p => p.type === 'day')?.value || '0')
-      let pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '0')
-      let pstMinute = parseInt(pstParts.find(p => p.type === 'minute')?.value || '0')
+      const verifyYear = parseInt(verifyParts.find(p => p.type === 'year')?.value || '0')
+      const verifyMonth = parseInt(verifyParts.find(p => p.type === 'month')?.value || '0')
+      const verifyDay = parseInt(verifyParts.find(p => p.type === 'day')?.value || '0')
+      const verifyHour = parseInt(verifyParts.find(p => p.type === 'hour')?.value || '0')
+      const verifyMinute = parseInt(verifyParts.find(p => p.type === 'minute')?.value || '0')
       
-      // Calculate adjustment needed
-      const hourDiff = hours - pstHour
-      const minuteDiff = minutes - pstMinute
-      const totalMinutesDiff = hourDiff * 60 + minuteDiff
-      
-      // Adjust the UTC date by the difference
-      utcDate = new Date(utcDate.getTime() + totalMinutesDiff * 60 * 1000)
-      
-      // Verify one more time
-      pstParts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Los_Angeles',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      }).formatToParts(utcDate)
-      
-      pstYear = parseInt(pstParts.find(p => p.type === 'year')?.value || '0')
-      pstMonth = parseInt(pstParts.find(p => p.type === 'month')?.value || '0')
-      pstDay = parseInt(pstParts.find(p => p.type === 'day')?.value || '0')
-      pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '0')
-      pstMinute = parseInt(pstParts.find(p => p.type === 'minute')?.value || '0')
-      
-      // Final adjustment if needed
-      if (pstYear !== year || pstMonth !== month || pstDay !== day || pstHour !== hours || pstMinute !== minutes) {
-        const finalHourDiff = hours - pstHour
-        const finalMinuteDiff = minutes - pstMinute
-        const finalTotalMinutesDiff = finalHourDiff * 60 + finalMinuteDiff
-        utcDate = new Date(utcDate.getTime() + finalTotalMinutesDiff * 60 * 1000)
+      // If verification doesn't match, adjust
+      if (verifyYear !== year || verifyMonth !== month || verifyDay !== day || verifyHour !== hours || verifyMinute !== minutes) {
+        const hourDiff = hours - verifyHour
+        const minuteDiff = minutes - verifyMinute
+        const totalDiffMs = (hourDiff * 60 + minuteDiff) * 60 * 1000
+        utcDate = new Date(utcDate.getTime() + totalDiffMs)
       }
       
       return api.createTask(groupId, {
