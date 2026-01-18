@@ -15,59 +15,88 @@ type DueFilter = 'ALL' | 'OVERDUE' | 'TODAY' | 'NEXT_7D' | 'NEXT_30D'
 type StatusFilter = 'ALL' | 'DONE' | 'NOT_DONE'
 type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 
-function formatLocalDateTime(iso: string) {
+// Utility functions to work consistently in PST
+// All dates from the backend are in UTC - we convert to PST for display and comparisons
+
+/**
+ * Convert a UTC ISO string to a Date object with PST time components
+ * This allows us to compare dates as if they were in PST timezone
+ * Returns a Date object that can be compared (using getTime()) with other PST dates
+ */
+function toPSTDate(isoString: string): Date {
+  const utcDate = new Date(isoString)
+  if (Number.isNaN(utcDate.getTime())) {
+    return new Date(0) // Return epoch if invalid
+  }
+  
+  // Get the PST representation of this UTC date
+  const pstStr = utcDate.toLocaleString('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+  
+  // Parse PST string: "MM/DD/YYYY, HH:MM:SS"
+  const match = pstStr.match(/(\d{2})\/(\d{2})\/(\d{4}),\s(\d{2}):(\d{2}):(\d{2})/)
+  if (!match) return utcDate
+  
+  const [, month, day, year, hour, minute, second] = match
+  // Create a date in local timezone with PST values
+  // This allows us to compare dates as if they were both in PST
+  return new Date(
+    parseInt(year, 10),
+    parseInt(month, 10) - 1,
+    parseInt(day, 10),
+    parseInt(hour, 10),
+    parseInt(minute, 10),
+    parseInt(second, 10)
+  )
+}
+
+/**
+ * Get current time as a Date object in PST
+ */
+function getPSTNow(): Date {
+  const now = new Date()
+  const pstStr = now.toLocaleString('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+  
+  const match = pstStr.match(/(\d{2})\/(\d{2})\/(\d{4}),\s(\d{2}):(\d{2}):(\d{2})/)
+  if (!match) return now
+  
+  const [, month, day, year, hour, minute, second] = match
+  return new Date(
+    parseInt(year, 10),
+    parseInt(month, 10) - 1,
+    parseInt(day, 10),
+    parseInt(hour, 10),
+    parseInt(minute, 10),
+    parseInt(second, 10)
+  )
+}
+
+/**
+ * Format a UTC ISO string for display in PST
+ */
+function formatLocalDateTime(iso: string): string {
   try {
-    // Parse ISO string - extract components to ensure UTC parsing
-    const dateString = iso.trim()
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return iso
     
-    // Match ISO 8601 format: YYYY-MM-DDTHH:mm:ss or YYYY-MM-DDTHH:mm:ss.sssZ
-    // or with timezone offset
-    const isoRegex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?(?:Z|([+-])(\d{2}):?(\d{2}))?$/
-    const match = dateString.match(isoRegex)
-    
-    let d: Date
-    
-    if (match) {
-      // Extract components
-      const [, year, month, day, hour, minute, second, millisecond, tzSign, tzHour, tzMinute] = match
-      
-      // Create UTC date explicitly using Date.UTC
-      // Note: month is 0-indexed in JavaScript Date
-      const utcTime = Date.UTC(
-        parseInt(year, 10),
-        parseInt(month, 10) - 1, // Month is 0-indexed
-        parseInt(day, 10),
-        parseInt(hour, 10),
-        parseInt(minute, 10),
-        parseInt(second, 10),
-        millisecond ? parseInt(millisecond, 10) : 0
-      )
-      
-      // If there's a timezone offset, adjust for it
-      if (tzSign && tzHour) {
-        const offsetHours = parseInt(tzHour, 10)
-        const offsetMinutes = tzMinute ? parseInt(tzMinute, 10) : 0
-        const offsetMs = (offsetHours * 60 + offsetMinutes) * 60 * 1000
-        const adjustedTime = tzSign === '+' ? utcTime - offsetMs : utcTime + offsetMs
-        d = new Date(adjustedTime)
-      } else {
-        // No timezone offset - treat as UTC
-        d = new Date(utcTime)
-      }
-    } else {
-      // Fallback: try parsing directly, but ensure UTC
-      const normalized = dateString.endsWith('Z') || dateString.match(/[+-]\d{2}:?\d{2}$/) 
-        ? dateString 
-        : dateString + 'Z'
-      d = new Date(normalized)
-    }
-    
-    if (Number.isNaN(d.getTime())) {
-      return iso
-    }
-    
-    // Convert UTC to PST/PDT using Intl.DateTimeFormat
-    // Use formatToParts to get precise control over the output
+    // Format in PST/PDT
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/Los_Angeles',
       month: 'short',
@@ -79,10 +108,7 @@ function formatLocalDateTime(iso: string) {
       timeZoneName: 'short',
     })
     
-    // Get all parts
     const parts = formatter.formatToParts(d)
-    
-    // Extract each component
     const month = parts.find(p => p.type === 'month')?.value || ''
     const day = parts.find(p => p.type === 'day')?.value || ''
     const year = parts.find(p => p.type === 'year')?.value || ''
@@ -91,39 +117,10 @@ function formatLocalDateTime(iso: string) {
     const dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value?.toUpperCase() || ''
     const timeZoneName = parts.find(p => p.type === 'timeZoneName')?.value || 'PST'
     
-    // Format: "Jan 15, 2024, 02:30 PM PST"
-    // Ensure minutes are always shown (2-digit format)
     return `${month} ${day}, ${year}, ${hour}:${minute} ${dayPeriod} ${timeZoneName}`
   } catch (error) {
-    // If anything fails, return original string
     return iso
   }
-}
-
-function getPSTOffset(year: number, month: number, day: number): number {
-  // Get the timezone offset for a specific date in America/Los_Angeles
-  // Returns the offset in hours (negative: -8 for PST, -7 for PDT)
-  // Use Intl to get the actual offset for this date
-  const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
-  
-  // Get what time it is in PST/PDT when it's 12:00 UTC
-  const pstFormatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
-  
-  const pstParts = pstFormatter.formatToParts(utcDate)
-  const pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '12', 10)
-  
-  // Calculate offset: if UTC is 12:00 and PST is 4:00, offset is -8
-  // If UTC is 12:00 and PDT is 5:00, offset is -7
-  let offset = pstHour - 12
-  if (offset > 6) offset -= 24 // Handle day rollover
-  if (offset < -12) offset += 24
-  
-  return offset
 }
 
 function formatEnumValue(value: string): string {
@@ -145,7 +142,8 @@ export function GroupDashboardPage() {
 
   const { data, isLoading, error, dataUpdatedAt } = useGroupState(groupId)
 
-  const [nowMs, setNowMs] = useState(() => Date.now())
+  // Track current time in PST for comparisons
+  const [pstNow, setPstNow] = useState(() => getPSTNow())
   const [pstTime, setPstTime] = useState(() => {
     const now = new Date()
     return now.toLocaleString('en-US', {
@@ -185,11 +183,11 @@ export function GroupDashboardPage() {
   const [gradePercent, setGradePercent] = useState('')
   const [gradeLetter, setGradeLetter] = useState<'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-' | 'D' | 'F'>('A')
 
-  // eslint rule: avoid Date.now() in render; update clock via effect.
+  // Update PST time every second
   useEffect(() => {
     const updateClock = () => {
-      setNowMs(Date.now())
-      // Update PST time
+      setPstNow(getPSTNow())
+      // Update PST time string for display
       const now = new Date()
       const pstString = now.toLocaleString('en-US', {
         timeZone: 'America/Los_Angeles',
@@ -210,9 +208,11 @@ export function GroupDashboardPage() {
   }, [])
 
   const secondsAgo = useMemo(() => {
-    if (!dataUpdatedAt || !nowMs) return null
-    return Math.floor((nowMs - dataUpdatedAt) / 1000)
-  }, [dataUpdatedAt, nowMs])
+    if (!dataUpdatedAt) return null
+    const updatedDate = new Date(dataUpdatedAt)
+    const now = new Date()
+    return Math.floor((now.getTime() - updatedDate.getTime()) / 1000)
+  }, [dataUpdatedAt])
 
   const completeMutation = useMutation({
     mutationFn: (args: {
@@ -229,9 +229,9 @@ export function GroupDashboardPage() {
 
   const createTaskMutation = useMutation({
     mutationFn: () => {
-      // Convert datetime-local input to PST/PDT time, then to UTC ISO string
+      // User enters time in PST - convert to UTC for storage
       // datetime-local gives us a string like "2026-01-18T06:57" with no timezone
-      // We need to interpret this as PST/PDT (America/Los_Angeles) time and convert to UTC
+      // We interpret this as PST/PDT time
       
       if (!taskDue) {
         throw new Error('Due date is required')
@@ -246,17 +246,26 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // Get the timezone offset for this specific date (handles DST automatically)
-      const offsetHours = getPSTOffset(year, month, day)
+      // Create a date representing this time in PST
+      // We'll use a workaround: create date string with PST timezone and parse it
+      // Format: "YYYY-MM-DDTHH:mm:00-08:00" for PST or "-07:00" for PDT
+      // First, determine if it's DST (roughly March-November, but we'll check accurately)
+      const testDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
+      const pstFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Los_Angeles',
+        hour: '2-digit',
+        hour12: false,
+      })
+      const pstHour = parseInt(pstFormatter.formatToParts(testDate).find(p => p.type === 'hour')?.value || '12', 10)
+      const offset = pstHour - 12 // If UTC 12:00 = PST 4:00, offset is -8
       
-      // Create UTC date: PST/PDT time - offset = UTC time
-      // If input is 6:57 AM PST (UTC-8, offset = -8), UTC is 6:57 - (-8) = 14:57 (2:57 PM)
-      // If input is 6:57 AM PDT (UTC-7, offset = -7), UTC is 6:57 - (-7) = 13:57 (1:57 PM)
+      // Convert PST to UTC: PST time - offset = UTC time
+      // If offset is -8 and PST is 6:57, UTC is 6:57 - (-8) = 14:57
       const utcDate = new Date(Date.UTC(
         year,
         month - 1,
         day,
-        hours - offsetHours, // offsetHours is negative (-8 or -7), so subtracting it adds the hours
+        hours - offset, // offset is negative, so subtracting adds hours
         minutes,
         0
       ))
@@ -277,12 +286,12 @@ export function GroupDashboardPage() {
     },
   })
 
-  // Filter and sort tasks
+  // Filter and sort tasks - all comparisons in PST
   const filteredAndSortedTasks = useMemo(() => {
     if (!data?.tasks) return []
 
     const q = search.trim().toLowerCase()
-    const now = nowMs
+    const nowPST = pstNow
 
     let filtered = data.tasks.filter((t) => {
       // Search filter
@@ -296,27 +305,31 @@ export function GroupDashboardPage() {
       if (statusFilter === 'DONE' && !done) return false
       if (statusFilter === 'NOT_DONE' && done) return false
 
-      // Due date filter
-      const dueMs = new Date(t.dueAt).getTime()
-      if (!Number.isNaN(dueMs)) {
-        const dayStart = new Date(now).setHours(0, 0, 0, 0)
-        const dayEnd = dayStart + 24 * 60 * 60 * 1000
-        const weekEnd = now + 7 * 24 * 60 * 60 * 1000
-        const monthEnd = now + 30 * 24 * 60 * 60 * 1000
+      // Due date filter - convert to PST for comparison
+      const duePST = toPSTDate(t.dueAt)
+      if (!Number.isNaN(duePST.getTime())) {
+        const dayStart = new Date(nowPST)
+        dayStart.setHours(0, 0, 0, 0)
+        const dayEnd = new Date(dayStart)
+        dayEnd.setDate(dayEnd.getDate() + 1)
+        const weekEnd = new Date(nowPST)
+        weekEnd.setDate(weekEnd.getDate() + 7)
+        const monthEnd = new Date(nowPST)
+        monthEnd.setDate(monthEnd.getDate() + 30)
 
-        if (dueFilter === 'OVERDUE' && dueMs >= now) return false
-        if (dueFilter === 'TODAY' && (dueMs < dayStart || dueMs >= dayEnd)) return false
-        if (dueFilter === 'NEXT_7D' && (dueMs < now || dueMs >= weekEnd)) return false
-        if (dueFilter === 'NEXT_30D' && (dueMs < now || dueMs >= monthEnd)) return false
+        if (dueFilter === 'OVERDUE' && duePST >= nowPST) return false
+        if (dueFilter === 'TODAY' && (duePST < dayStart || duePST >= dayEnd)) return false
+        if (dueFilter === 'NEXT_7D' && (duePST < nowPST || duePST >= weekEnd)) return false
+        if (dueFilter === 'NEXT_30D' && (duePST < nowPST || duePST >= monthEnd)) return false
       }
 
       return true
     })
 
-    // Sort
+    // Sort - compare in PST
     filtered.sort((a, b) => {
       if (sortBy === 'DUE_DATE') {
-        return new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime()
+        return toPSTDate(a.dueAt).getTime() - toPSTDate(b.dueAt).getTime()
       }
       if (sortBy === 'PENALTY') {
         return b.penalty - a.penalty
@@ -328,7 +341,7 @@ export function GroupDashboardPage() {
     })
 
     return filtered
-  }, [data?.tasks, search, dueFilter, statusFilter, typeFilters, sortBy, nowMs])
+  }, [data?.tasks, search, dueFilter, statusFilter, typeFilters, sortBy, pstNow])
 
   const resetFilters = () => {
     setSearch('')
@@ -581,7 +594,9 @@ export function GroupDashboardPage() {
             </div>
           ) : (
             filteredAndSortedTasks.map((t) => {
-              const isOverdue = new Date(t.dueAt).getTime() < nowMs && !isDoneStatus(t.myStatus)
+              // Check if overdue - compare in PST
+              const duePST = toPSTDate(t.dueAt)
+              const isOverdue = duePST < pstNow && !isDoneStatus(t.myStatus)
               const needsGrade = (t.type === 'EXAM' || t.type === 'ASSIGNMENT') && t.myStatus !== 'DONE'
 
               return (
