@@ -6,10 +6,19 @@ from app.schemas.base import ApiModel
 
 
 class RegisterRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)  # Allow both snake_case and camelCase
+    model_config = ConfigDict(
+        populate_by_name=True,  # Allow both field name and alias
+        str_strip_whitespace=True,
+    )
     
     email: EmailStr
-    display_name: str = Field(..., min_length=1, max_length=120, alias="displayName")
+    # Accept both displayName (camelCase from frontend) and display_name (snake_case)
+    display_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=120,
+        alias="displayName",  # This allows "displayName" as input
+    )
     password: str = Field(..., min_length=8, max_length=100)
 
     @field_validator("password")
