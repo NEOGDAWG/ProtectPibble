@@ -43,7 +43,7 @@ def apply_deadline_penalties_once() -> int:
             with db.begin():
                 pet = db.scalar(select(Pet).where(Pet.group_id == task.group_id).with_for_update())
                 if pet is None:
-                    pet = Pet(group_id=task.group_id, name="Pibble", health=10, max_health=10)
+                    pet = Pet(group_id=task.group_id, name="Pibble", health=100, max_health=100)
                     db.add(pet)
                     db.flush()
 

@@ -20,8 +20,8 @@ class Pet(Base):
     )
 
     name: Mapped[str] = mapped_column(String(80), nullable=False, default="Pibble")
-    health: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
-    max_health: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    health: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
+    max_health: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     updated_at: Mapped[DateTime] = mapped_column(

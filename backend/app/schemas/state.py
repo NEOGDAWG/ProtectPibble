@@ -41,6 +41,8 @@ class TaskState(ApiModel):
     due_at: datetime
     penalty: int
     my_status: TaskStatusValue
+    my_grade_letter: Optional[str] = None
+    my_grade_percent: Optional[int] = None
     stats: TaskStats
 
 

@@ -23,6 +23,7 @@ from app.schemas.groups import (
 )
 from app.schemas.state import GroupStateResponse
 from app.services.authz import require_group_membership
+from app.services.deadline_penalties import apply_deadline_penalties_for_group
 from app.services.group_state import build_group_state
 from app.utils.invite_codes import generate_invite_code
 
@@ -82,7 +83,8 @@ def create_group(
     membership = GroupMembership(group_id=group.id, user_id=user.id, role=role)
     db.add(membership)
 
-    pet = Pet(group_id=group.id, name="Pibble", health=10, max_health=10)
+    initial_hp = max(1, min(1000, int(body.initial_health)))  # Clamp between 1 and 1000
+    pet = Pet(group_id=group.id, name="Pibble", health=initial_hp, max_health=initial_hp)
     db.add(pet)
 
     db.add(Event(group_id=group.id, type=EventType.GROUP_CREATED, actor_user_id=user.id))
@@ -152,5 +154,7 @@ def group_state(
     user: CurrentUser = Depends(get_current_user),
 ) -> GroupStateResponse:
     ctx = require_group_membership(db, group_id=group_id, user=user)
+    # Apply deadline penalties before building state (for demo convenience)
+    apply_deadline_penalties_for_group(db, group_id=ctx.group.id)
     return build_group_state(db, group=ctx.group, viewer=user)
 

@@ -5,6 +5,7 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
+from app.db.sqlite_schema import ensure_sqlite_columns
 
 settings = get_settings()
 
@@ -25,6 +26,7 @@ def _ensure_sqlite_schema() -> None:
     # If we fell back to SQLite, create tables automatically for MVP dev.
     if engine.url.get_backend_name() == "sqlite":
         Base.metadata.create_all(bind=engine)
+        ensure_sqlite_columns(engine)
 
 app.include_router(api_router)
 

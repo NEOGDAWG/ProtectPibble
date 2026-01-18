@@ -44,7 +44,7 @@ def build_group_state(db: Session, group: Group, viewer: CurrentUser) -> GroupSt
     pet = db.scalar(select(Pet).where(Pet.group_id == group.id))
     if pet is None:
         # Safety: ensure group always has a pet row.
-        pet = Pet(group_id=group.id, name="Pibble", health=10, max_health=10)
+        pet = Pet(group_id=group.id, name="Pibble", health=100, max_health=100)
         db.add(pet)
         db.commit()
         db.refresh(pet)
@@ -71,6 +71,11 @@ def build_group_state(db: Session, group: Group, viewer: CurrentUser) -> GroupSt
         select(TaskStatus).where(TaskStatus.task_id.in_(task_ids), TaskStatus.user_id == viewer.id)
     ).scalars().all()
     my_status_by_task_id = {str(ts.task_id): ts.status for ts in my_status_rows}
+    my_grade_by_task_id = {
+        str(ts.task_id): {"letter": ts.grade_letter, "percent": ts.grade_percent}
+        for ts in my_status_rows
+        if ts.grade_letter is not None or ts.grade_percent is not None
+    }
 
     # Done counts per task (DONE or EXCUSED)
     done_counts_rows = db.execute(
@@ -93,6 +98,7 @@ def build_group_state(db: Session, group: Group, viewer: CurrentUser) -> GroupSt
     task_states: list[TaskState] = []
     for t in tasks:
         tid = str(t.id)
+        my_grade = my_grade_by_task_id.get(tid)
         task_states.append(
             TaskState(
                 id=tid,
@@ -101,6 +107,8 @@ def build_group_state(db: Session, group: Group, viewer: CurrentUser) -> GroupSt
                 due_at=t.due_at,
                 penalty=t.penalty,
                 my_status=my_status_by_task_id.get(tid, TaskStatusValue.NOT_DONE),
+                my_grade_letter=my_grade.get("letter") if my_grade else None,
+                my_grade_percent=my_grade.get("percent") if my_grade else None,
                 stats=TaskStats(
                     done_count=done_count_by_task_id.get(tid, 0),
                     total_count=total_count,

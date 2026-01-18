@@ -25,6 +25,7 @@ export function GroupsPage() {
     term: '',
     mode: 'FRIEND',
     groupName: '',
+    initialHealth: 100,
   })
   const [inviteCode, setInviteCode] = useState('')
 
@@ -156,7 +157,16 @@ export function GroupsPage() {
               label="Group name"
               value={createForm.groupName}
               onChange={(e) => setCreateForm((p) => ({ ...p, groupName: e.target.value }))}
-              placeholder="Kabir’s CPSC313"
+              placeholder="Kabir's CPSC313"
+              required
+            />
+            <Input
+              label="Initial pet HP"
+              type="number"
+              min={1}
+              max={1000}
+              value={String(createForm.initialHealth ?? 100)}
+              onChange={(e) => setCreateForm((p) => ({ ...p, initialHealth: Number(e.target.value) || 100 }))}
               required
             />
             {createMutation.error && (
@@ -200,4 +210,3 @@ export function GroupsPage() {
     </div>
   )
 }
-

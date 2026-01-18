@@ -31,6 +31,7 @@ export type CreateGroupRequest = {
   school?: string | null
   mode: GroupMode
   groupName: string
+  initialHealth?: number
 }
 export type CreateGroupResponse = { group: GroupSummary }
 export type JoinGroupRequest = { inviteCode: string }
@@ -45,6 +46,8 @@ export type TaskState = {
   dueAt: string
   penalty: number
   myStatus: TaskStatusValue
+  myGradeLetter?: string | null
+  myGradePercent?: number | null
   stats: { doneCount: number; totalCount: number }
 }
 
@@ -89,7 +92,11 @@ export type CreateTaskRequest = {
 
 export type UpdateTaskRequest = Partial<CreateTaskRequest>
 
-export type CompleteTaskRequest = { status: TaskStatusValue }
+export type CompleteTaskRequest = {
+  status: TaskStatusValue
+  gradePercent?: number
+  gradeLetter?: string
+}
 
 export type NudgeRequest = { toUserId: string; taskId?: string; message?: string }
 export type NudgeResponse = { ok: boolean }

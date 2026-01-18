@@ -29,6 +29,7 @@ class CreateGroupRequest(ApiModel):
     school: Optional[str] = None
     mode: GroupMode
     group_name: str
+    initial_health: int = 100
 
 
 class JoinGroupRequest(ApiModel):
