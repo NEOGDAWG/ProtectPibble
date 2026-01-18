@@ -34,7 +34,25 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return dateTimeFmt ? dateTimeFmt.format(d) : d.toLocaleString()
+  // Format in PST timezone
+  return d.toLocaleString('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  })
+}
+
+function formatEnumValue(value: string): string {
+  // Convert SNAKE_CASE to Title Case
+  return value
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
 }
 
 function isDoneStatus(s: TaskStatusValue) {
@@ -133,7 +151,7 @@ export function GroupDashboardPage() {
   const createTaskMutation = useMutation({
     mutationFn: () => {
       // Convert datetime-local input to PST time, then to ISO string
-      // datetime-local gives us a string like "2026-01-18T14:30" with no timezone
+      // datetime-local gives us a string like "2026-01-18T06:57" with no timezone
       // We need to interpret this as PST (America/Los_Angeles) time
       
       if (!taskDue) {
@@ -149,27 +167,20 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // We need to find a UTC date that, when converted to PST, gives us the desired time
-      // Strategy: try different UTC times and check what PST time they represent
-      // Start with assuming PST = UTC-8 (PST) or UTC-7 (PDT)
+      // Create a date string that represents the PST time we want
+      // We'll use a simpler approach: create a date in local time that represents PST
+      // Then convert it properly to UTC
       
-      // Check if DST is in effect for the target date
-      // Create a test date in the middle of the target day to check DST
-      const testDate = new Date(year, month - 1, day, 12, 0, 0) // Noon on target day
-      const pstTest = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Los_Angeles',
-        timeZoneName: 'short',
-      }).formatToParts(testDate)
-      const isDST = pstTest.find(p => p.type === 'timeZoneName')?.value === 'PDT'
+      // Create a date object for the target date/time in PST
+      // We'll create it as if it were in UTC, then adjust
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
       
-      // PST is UTC-8, PDT is UTC-7
-      const offsetHours = isDST ? 7 : 8
+      // Use a helper: create a date that when formatted in PST gives us the desired time
+      // We'll iterate to find the right UTC time
+      let utcDate = new Date(`${dateStr}Z`) // Start with treating as UTC
       
-      // Create UTC date: add offset hours to get the UTC time that represents our PST time
-      const utcDate = new Date(Date.UTC(year, month - 1, day, hours + offsetHours, minutes, 0))
-      
-      // Verify: check what PST time this UTC date represents
-      const verifyPST = new Intl.DateTimeFormat('en-US', {
+      // Check what PST time this represents
+      let pstParts = new Intl.DateTimeFormat('en-US', {
         timeZone: 'America/Los_Angeles',
         year: 'numeric',
         month: '2-digit',
@@ -179,19 +190,43 @@ export function GroupDashboardPage() {
         hour12: false,
       }).formatToParts(utcDate)
       
-      const verifyYear = parseInt(verifyPST.find(p => p.type === 'year')?.value || '0')
-      const verifyMonth = parseInt(verifyPST.find(p => p.type === 'month')?.value || '0')
-      const verifyDay = parseInt(verifyPST.find(p => p.type === 'day')?.value || '0')
-      const verifyHour = parseInt(verifyPST.find(p => p.type === 'hour')?.value || '0')
-      const verifyMinute = parseInt(verifyPST.find(p => p.type === 'minute')?.value || '0')
+      let pstYear = parseInt(pstParts.find(p => p.type === 'year')?.value || '0')
+      let pstMonth = parseInt(pstParts.find(p => p.type === 'month')?.value || '0')
+      let pstDay = parseInt(pstParts.find(p => p.type === 'day')?.value || '0')
+      let pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '0')
+      let pstMinute = parseInt(pstParts.find(p => p.type === 'minute')?.value || '0')
       
-      // If verification doesn't match, adjust
-      if (verifyYear !== year || verifyMonth !== month || verifyDay !== day || verifyHour !== hours || verifyMinute !== minutes) {
-        // Calculate the difference and adjust
-        const hourDiff = hours - verifyHour
-        const minuteDiff = minutes - verifyMinute
-        const adjustmentMs = (hourDiff * 60 + minuteDiff) * 60 * 1000
-        utcDate.setTime(utcDate.getTime() + adjustmentMs)
+      // Calculate adjustment needed
+      const hourDiff = hours - pstHour
+      const minuteDiff = minutes - pstMinute
+      const totalMinutesDiff = hourDiff * 60 + minuteDiff
+      
+      // Adjust the UTC date by the difference
+      utcDate = new Date(utcDate.getTime() + totalMinutesDiff * 60 * 1000)
+      
+      // Verify one more time
+      pstParts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).formatToParts(utcDate)
+      
+      pstYear = parseInt(pstParts.find(p => p.type === 'year')?.value || '0')
+      pstMonth = parseInt(pstParts.find(p => p.type === 'month')?.value || '0')
+      pstDay = parseInt(pstParts.find(p => p.type === 'day')?.value || '0')
+      pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '0')
+      pstMinute = parseInt(pstParts.find(p => p.type === 'minute')?.value || '0')
+      
+      // Final adjustment if needed
+      if (pstYear !== year || pstMonth !== month || pstDay !== day || pstHour !== hours || pstMinute !== minutes) {
+        const finalHourDiff = hours - pstHour
+        const finalMinuteDiff = minutes - pstMinute
+        const finalTotalMinutesDiff = finalHourDiff * 60 + finalMinuteDiff
+        utcDate = new Date(utcDate.getTime() + finalTotalMinutesDiff * 60 * 1000)
       }
       
       return api.createTask(groupId, {
@@ -523,10 +558,10 @@ export function GroupDashboardPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{t.title}</span>
                       <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-200">
-                        {t.type}
+                        {formatEnumValue(t.type)}
                       </span>
                       <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-200">
-                        {t.myStatus}
+                        {formatEnumValue(t.myStatus)}
                       </span>
                       {t.myGradeLetter && (
                         <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-emerald-300">
@@ -696,38 +731,57 @@ export function GroupDashboardPage() {
               Activity will appear here.
             </div>
           ) : (
-            data.recentEvents.slice(0, 15).map((e, idx) => (
-              <div key={idx} className="rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3">
-                <div className="text-sm text-slate-200">
-                  {data.group.mode === 'FRIEND' ? (
-                    <>
-                      <span className="font-medium">{e.actor?.displayName ?? 'System'}</span> {e.type}
-                      {typeof e.delta === 'number' && e.delta !== 0 ? (
-                        <span className={e.delta >= 0 ? 'ml-2 text-emerald-300 font-medium' : 'ml-2 text-rose-300 font-medium'}>
-                          {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
-                        </span>
-                      ) : null}
-                      {e.target?.displayName ? (
-                        <>
-                          {' '}
-                          → <span className="font-medium">{e.target.displayName}</span>
-                        </>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      {e.message || e.type}
-                      {typeof e.delta === 'number' && e.delta !== 0 ? (
-                        <span className={e.delta >= 0 ? 'ml-2 text-emerald-300' : 'ml-2 text-rose-300'}>
-                          {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
-                        </span>
-                      ) : null}
-                    </>
-                  )}
+            data.recentEvents.slice(0, 15).map((e, idx) => {
+              // Find task name if taskId exists
+              const task = e.taskId ? data.tasks.find(t => t.id === e.taskId) : null
+              const taskName = task?.title || null
+              
+              // Format event message
+              let eventText = ''
+              if (e.type === 'TASK_COMPLETED' && taskName) {
+                eventText = `${taskName} completed`
+              } else if (e.type === 'TASK_MISSED' && taskName) {
+                eventText = `${taskName} missed`
+              } else if (e.type === 'TASK_CREATED' && taskName) {
+                eventText = `Created ${taskName}`
+              } else {
+                // Fallback to formatted enum value
+                eventText = formatEnumValue(e.type)
+              }
+              
+              return (
+                <div key={idx} className="rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3">
+                  <div className="text-sm text-slate-200">
+                    {data.group.mode === 'FRIEND' ? (
+                      <>
+                        <span className="font-medium">{e.actor?.displayName ?? 'System'}</span> {eventText}
+                        {typeof e.delta === 'number' && e.delta !== 0 ? (
+                          <span className={e.delta >= 0 ? 'ml-2 text-emerald-300 font-medium' : 'ml-2 text-rose-300 font-medium'}>
+                            {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
+                          </span>
+                        ) : null}
+                        {e.target?.displayName ? (
+                          <>
+                            {' '}
+                            → <span className="font-medium">{e.target.displayName}</span>
+                          </>
+                        ) : null}
+                      </>
+                    ) : (
+                      <>
+                        {e.message || eventText}
+                        {typeof e.delta === 'number' && e.delta !== 0 ? (
+                          <span className={e.delta >= 0 ? 'ml-2 text-emerald-300' : 'ml-2 text-rose-300'}>
+                            {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">{formatLocalDateTime(e.createdAt)}</div>
                 </div>
-                <div className="mt-1 text-xs text-slate-500">{formatLocalDateTime(e.createdAt)}</div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </section>
