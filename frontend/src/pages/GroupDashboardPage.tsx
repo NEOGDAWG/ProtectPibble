@@ -11,11 +11,21 @@ import { ModeBadge } from '../components/ModeBadge'
 import { useGroupState } from '../hooks/useGroupState'
 import { queryClient } from '../queryClient'
 
-const dateTimeFmt = new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-  timeZoneName: 'short',
-})
+// Safe DateTimeFormat with fallback for browser compatibility
+const dateTimeFmt: Intl.DateTimeFormat | null = (() => {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    })
+  } catch {
+    return null
+  }
+})()
 
 type DueFilter = 'ALL' | 'OVERDUE' | 'TODAY' | 'NEXT_7D' | 'NEXT_30D'
 type StatusFilter = 'ALL' | 'DONE' | 'NOT_DONE'
@@ -24,7 +34,7 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return dateTimeFmt.format(d)
+  return dateTimeFmt ? dateTimeFmt.format(d) : d.toLocaleString()
 }
 
 function isDoneStatus(s: TaskStatusValue) {
