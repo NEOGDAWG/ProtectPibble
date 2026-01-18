@@ -18,10 +18,9 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  // Read UTC values directly - NO conversion, display exactly as stored
+  // Display exactly as stored - no conversion, just read UTC values directly
   const year = d.getUTCFullYear()
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const month = monthNames[d.getUTCMonth()]
+  const month = d.toLocaleString('en-US', { month: 'short' })
   const day = String(d.getUTCDate()).padStart(2, '0')
   const hour = d.getUTCHours()
   const minute = String(d.getUTCMinutes()).padStart(2, '0')
