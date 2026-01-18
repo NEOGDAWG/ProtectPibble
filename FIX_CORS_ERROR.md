@@ -1,12 +1,16 @@
 # Fix CORS Error - Add Vercel URL to Render
 
+## ⚠️ IMPORTANT: Set this in RENDER (backend), NOT in Vercel (frontend)!
+
 ## The Problem
 
 Your frontend at `https://protect-pibble.vercel.app` is trying to make requests to your backend at `https://protectpibble.onrender.com`, but the backend is blocking these requests because the Vercel URL is not in the allowed CORS origins.
 
 ## The Solution
 
-Add the `CORS_ORIGINS` environment variable in Render with your Vercel URL.
+Add the `CORS_ORIGINS` environment variable in **Render** (your backend service) with your Vercel URL.
+
+**DO NOT set this in Vercel** - it needs to be in Render where your backend is running!
 
 ## Steps
 
