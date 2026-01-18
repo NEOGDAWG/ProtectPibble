@@ -16,11 +16,8 @@ const NAME_KEY = 'protectpibble.demoName'
 export function getAuthToken(): AuthToken | null {
   const tokenJson = localStorage.getItem(TOKEN_KEY)
   if (!tokenJson) {
-    // Fallback to demo auth for backward compatibility
-    const email = localStorage.getItem(EMAIL_KEY) || ''
-    const name = localStorage.getItem(NAME_KEY) || ''
-    if (!email.trim()) return null
-    return null // Return null to force proper login
+    // No token found - require proper login
+    return null
   }
   try {
     return JSON.parse(tokenJson) as AuthToken
