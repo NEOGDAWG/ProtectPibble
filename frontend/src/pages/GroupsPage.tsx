@@ -118,7 +118,7 @@ export function GroupsPage() {
                 </Button>
                 {/* Create Group Panel */}
                 {showCreatePanel && (
-                  <div className="absolute top-full right-0 mt-2 rounded-2xl p-5 w-fit z-50" style={{ backgroundColor: '#f2f7fa' }}>
+                  <div className="absolute top-full right-0 mt-2 rounded-2xl p-5 w-fit z-50 shadow-md transition-all duration-200" style={{ backgroundColor: '#f2f7fa' }}>
                     <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Create group</h2>
                     <form
                       className="grid gap-4"
@@ -199,7 +199,7 @@ export function GroupsPage() {
                 </Button>
                 {/* Join Group Panel */}
                 {showJoinPanel && (
-                  <div className="absolute top-full right-0 mt-2 rounded-2xl p-5 w-fit z-50" style={{ backgroundColor: '#f2f7fa' }}>
+                  <div className="absolute top-full right-0 mt-2 rounded-2xl p-5 w-fit z-50 shadow-md transition-all duration-200" style={{ backgroundColor: '#f2f7fa' }}>
                     <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Join group</h2>
                     <form
                       className="grid gap-4"
@@ -254,7 +254,7 @@ export function GroupsPage() {
                     <Link
                       key={g.id}
                       to={`/groups/${g.id}`}
-                      className="flex flex-col gap-3 rounded-xl px-4 py-3 transition-opacity hover:opacity-90 w-fit"
+                      className="flex flex-col gap-3 rounded-xl px-4 py-3 transition-all duration-200 hover:opacity-90 hover:shadow-md hover:-translate-y-0.5 w-fit"
                       style={{ backgroundColor: '#f2f7fa' }}
                     >
                       <div className="flex items-center gap-2">

@@ -489,7 +489,7 @@ export function GroupDashboardPage() {
           <div className="lg:col-span-2 flex flex-col min-h-0">
 
             {/* Tasks Section */}
-            <div className="rounded-2xl p-6 pb-2 flex flex-col min-h-0" style={{ backgroundColor: '#f2f7fa' }}>
+            <div className="rounded-2xl p-6 pb-2 flex flex-col min-h-0 shadow-sm transition-shadow duration-200" style={{ backgroundColor: '#f2f7fa' }}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-normal" style={{ color: '#314479' }}>Tasks</h2>
                 <div className="flex gap-2">
@@ -817,7 +817,7 @@ export function GroupDashboardPage() {
 
             {/* Leaderboard */}
             {data.group.mode === 'FRIEND' && data.leaderboard?.length ? (
-              <div className="rounded-2xl p-5 flex flex-col min-h-0" style={{ backgroundColor: '#f2f7fa' }}>
+              <div className="rounded-2xl p-5 flex flex-col min-h-0 shadow-sm transition-shadow duration-200" style={{ backgroundColor: '#f2f7fa' }}>
                 <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Leaderboard</h2>
                 <div className="grid gap-2 overflow-y-auto rounded-b-2xl -mx-5 -mb-5 px-5 pb-5" style={{ maxHeight: '120px' }}>
                   {data.leaderboard.map((row, idx) => (
@@ -839,7 +839,7 @@ export function GroupDashboardPage() {
             ) : null}
 
             {/* Activity Log */}
-            <div className="rounded-2xl p-5 pb-2 flex flex-col flex-1 min-h-0" style={{ backgroundColor: '#f2f7fa' }}>
+            <div className="rounded-2xl p-5 pb-2 flex flex-col flex-1 min-h-0 shadow-sm transition-shadow duration-200" style={{ backgroundColor: '#f2f7fa' }}>
               <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Activity Log</h2>
               <div className="grid gap-2 overflow-y-auto rounded-b-2xl flex-1 -mx-5 -mb-2 px-5 pb-2" style={{ maxHeight: 'calc(100vh - 700px)' }}>
                 {data.recentEvents.length === 0 ? (
