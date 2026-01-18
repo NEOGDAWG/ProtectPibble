@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -24,7 +25,15 @@ router = APIRouter()
 
 
 def _get_task_and_group(db: Session, task_id: str) -> tuple[Task, Group]:
-    task = db.scalar(select(Task).where(Task.id == task_id))
+    try:
+        task_uuid = uuid.UUID(task_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid task id",
+        ) from e
+
+    task = db.scalar(select(Task).where(Task.id == task_uuid))
     if task is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     group = db.scalar(select(Group).where(Group.id == task.group_id))
@@ -83,7 +92,7 @@ def update_task(
     task, group = _get_task_and_group(db, task_id)
     ctx = require_group_membership(db, group_id=str(group.id), user=user)
     # creator or instructor
-    if str(task.created_by_id) != user.id:
+    if task.created_by_id != user.id:
         require_instructor_or_creator(ctx, user)
 
     if body.title is not None:
@@ -116,7 +125,7 @@ def delete_task(
 ) -> dict:
     task, group = _get_task_and_group(db, task_id)
     ctx = require_group_membership(db, group_id=str(group.id), user=user)
-    if str(task.created_by_id) != user.id:
+    if task.created_by_id != user.id:
         require_instructor_or_creator(ctx, user)
 
     db.delete(task)

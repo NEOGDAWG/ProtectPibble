@@ -4,6 +4,11 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+ignore = ["UP045"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/deps/*.py" = ["B008"]
+"app/api/routes/*.py" = ["B008"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

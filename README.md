@@ -39,9 +39,29 @@ docker compose up -d
 ## Endpoints
 
 - **Backend health**: `GET http://127.0.0.1:8000/health`
+- **Backend docs**: `http://127.0.0.1:8000/docs`
 - **Frontend**: `http://127.0.0.1:5173`
 
 ## Notes
 
 - This setup matches the architecture in `HACKATHON.docx` / `HACKATHON.pdf` (React + FastAPI + Postgres + worker).
 - Auth is intended to use **Clerk** (see `env.example` placeholders).
+
+## MVP API (backend)
+
+Demo auth for now: include headers on requests:
+
+- `X-Demo-Email: you@example.com`
+- `X-Demo-Name: Your Name` (optional)
+
+Key endpoints:
+
+- `POST /groups`
+- `POST /groups/join`
+- `GET /groups/my`
+- `GET /groups/{group_id}/state`
+- `POST /groups/{group_id}/tasks`
+- `PATCH /tasks/{task_id}`
+- `DELETE /tasks/{task_id}`
+- `POST /tasks/{task_id}/complete`
+- `POST /groups/{group_id}/nudges` (disabled in INSTRUCTOR mode MVP)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
 from typing import Optional
 
@@ -13,7 +14,7 @@ from app.models.user import User
 
 @dataclass(frozen=True)
 class CurrentUser:
-    id: str
+    id: uuid.UUID
     email: str
     display_name: str
 
@@ -65,5 +66,5 @@ def get_current_user(
         db.commit()
         db.refresh(user)
 
-    return CurrentUser(id=str(user.id), email=user.email, display_name=user.display_name)
+    return CurrentUser(id=user.id, email=user.email, display_name=user.display_name)
 

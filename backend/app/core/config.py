@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,7 +22,12 @@ class Settings(BaseSettings):
     clerk_issuer: str = ""
     clerk_jwks_url: str = ""
 
-    cors_origins: list[str] = ["http://127.0.0.1:5173"]
+    # Frontend dev server ports may change (Vite uses next free port).
+    cors_origins: list[str] = [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+    ]
+    cors_allow_origin_regex: Optional[str] = r"^http://(localhost|127\.0\.0\.1):\d+$"
 
 
 @lru_cache
