@@ -10,6 +10,7 @@ import { Input } from '../components/Input'
 import { ModeBadge } from '../components/ModeBadge'
 import { useGroupState } from '../hooks/useGroupState'
 import { queryClient } from '../queryClient'
+import { getPetImage } from '../utils/petImage'
 
 type DueFilter = 'ALL' | 'OVERDUE' | 'TODAY' | 'NEXT_7D' | 'NEXT_30D'
 type StatusFilter = 'ALL' | 'DONE' | 'NOT_DONE'
@@ -439,21 +440,25 @@ export function GroupDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex min-h-full max-w-5xl flex-col gap-6 px-6 py-10">
-        <div className="text-slate-300">Loading dashboard…</div>
+      <div className="min-h-full bg-blue-50 px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-blue-700">Loading dashboard…</div>
+        </div>
       </div>
     )
   }
 
   if (error || !data) {
     return (
-      <div className="mx-auto flex min-h-full max-w-5xl flex-col gap-6 px-6 py-10">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-          <p className="text-rose-200">{(error as Error)?.message || 'Failed to load group.'}</p>
-          <div className="mt-3">
-            <Link className="text-slate-200 underline" to="/groups">
-              Back to groups
-            </Link>
+      <div className="min-h-full bg-blue-50 px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-2xl border border-red-200 bg-white p-5 shadow-sm">
+            <p className="text-red-600">{(error as Error)?.message || 'Failed to load group.'}</p>
+            <div className="mt-3">
+              <Link className="text-blue-600 underline" to="/groups">
+                Back to groups
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -465,459 +470,472 @@ export function GroupDashboardPage() {
 
   const healthPercent = Math.max(0, Math.min(100, (data.pet.health / data.pet.maxHealth) * 100))
   const healthColor =
-    healthPercent >= 70 ? 'bg-emerald-500' : healthPercent >= 40 ? 'bg-yellow-500' : 'bg-rose-500'
+    healthPercent >= 70 ? 'bg-green-500' : healthPercent >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+  const petImageSrc = getPetImage(data.pet.health, data.pet.maxHealth)
 
   return (
-    <div className="mx-auto flex min-h-full max-w-5xl flex-col gap-6 px-6 py-10">
-      <header className="flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{data.group.name}</h1>
-              <ModeBadge mode={data.group.mode} />
-            </div>
-            <p className="text-slate-300">
-              {data.group.class.code} • {data.group.class.term}
-              {secondsAgo !== null ? <span className="ml-2 text-slate-500">updated {secondsAgo}s ago</span> : null}
-            </p>
-            <div className="flex items-center gap-2 text-sm text-slate-400">
-              <span className="font-mono">PST: {pstTime}</span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Link className="rounded-lg border border-slate-800 px-3 py-2 text-sm hover:bg-slate-900/40" to="/groups">
-              Back
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-        <div className="flex items-center justify-between gap-3">
+    <div className="min-h-full bg-blue-50 px-6 py-8">
+      <div className="mx-auto max-w-6xl">
+        {/* Header with group name and back button */}
+        <div className="mb-6 flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-medium">{data.pet.name}</h2>
-            <p className="text-sm text-slate-300">
-              {data.pet.health <= 0 ? (
-                <span className="text-rose-400 font-medium">💀 Deceased</span>
-              ) : (
-                <span className={healthPercent < 30 ? 'text-rose-400' : healthPercent < 70 ? 'text-yellow-400' : 'text-emerald-400'}>
-                  {healthPercent < 30 ? '⚠️ Critical' : healthPercent < 70 ? '😟 Unwell' : '😊 Healthy'}
-                </span>
-              )}
+            <h1 className="text-3xl font-bold text-blue-900">{data.group.name}</h1>
+            <p className="mt-1 text-blue-700">
+              {data.group.class.code} • {data.group.class.term}
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-slate-100">{data.pet.health}</div>
-            <div className="text-sm text-slate-400">/ {data.pet.maxHealth} HP</div>
-          </div>
-        </div>
-        <div className="mt-3 h-4 w-full overflow-hidden rounded-full bg-slate-800">
-          <div className={`h-full transition-all ${healthColor}`} style={{ width: `${healthPercent}%` }} />
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-medium">Tasks</h2>
-            <div className="text-sm text-slate-400">
-              Showing {filteredAndSortedTasks.length} of {data.tasks.length}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setFiltersOpen((v) => !v)}>
-              {filtersOpen ? 'Hide filters' : 'Filters'}
-            </Button>
-            {canCreateTasks ? (
-              <Button onClick={() => setShowCreate((v) => !v)} variant="primary">
-                {showCreate ? 'Close' : 'Create task'}
-              </Button>
-            ) : null}
-          </div>
-        </div>
-
-        {filtersOpen && (
-          <div className="mt-4 grid gap-4 rounded-lg border border-slate-800 bg-slate-950/30 p-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                label="Search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search tasks..."
-              />
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-slate-200">Due date</span>
-                <select
-                  className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-slate-100"
-                  value={dueFilter}
-                  onChange={(e) => setDueFilter(e.target.value as DueFilter)}
-                >
-                  <option value="ALL">All</option>
-                  <option value="OVERDUE">Overdue</option>
-                  <option value="TODAY">Today</option>
-                  <option value="NEXT_7D">Next 7 days</option>
-                  <option value="NEXT_30D">Next 30 days</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-slate-200">Status</span>
-                <select
-                  className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-slate-100"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                >
-                  <option value="ALL">All</option>
-                  <option value="NOT_DONE">Not done</option>
-                  <option value="DONE">Done</option>
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-slate-200">Sort by</span>
-                <select
-                  className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-slate-100"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortBy)}
-                >
-                  <option value="DUE_DATE">Due date</option>
-                  <option value="PENALTY">Penalty (high to low)</option>
-                  <option value="TITLE">Title (A-Z)</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="text-sm text-slate-200">Types</div>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-                {(Object.keys(typeFilters) as TaskType[]).map((tt) => (
-                  <label
-                    key={tt}
-                    className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2 text-sm text-slate-200"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={typeFilters[tt]}
-                      onChange={(e) => setTypeFilters((p) => ({ ...p, [tt]: e.target.checked }))}
-                    />
-                    <span>{tt}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
-              <Button onClick={resetFilters}>Reset</Button>
-            </div>
-          </div>
-        )}
-
-        {showCreate ? (
-          <form
-            className="mt-4 grid gap-4 rounded-lg border border-slate-800 bg-slate-950/30 p-4"
-            onSubmit={(e) => {
-              e.preventDefault()
-              createTaskMutation.mutate()
-            }}
+          <Link
+            className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-blue-900 shadow-sm hover:bg-gray-50"
+            to="/groups"
           >
-            <Input label="Title" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} required />
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-slate-200">Type</span>
-              <select
-                className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-slate-100"
-                value={taskType}
-                onChange={(e) => setTaskType(e.target.value as TaskType)}
-              >
-                <option value="ASSIGNMENT">Assignment</option>
-                <option value="QUIZ">Quiz</option>
-                <option value="LECTURE">Lecture</option>
-                <option value="EXAM">Exam</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </label>
-            <Input
-              label="Due at"
-              type="datetime-local"
-              value={taskDue}
-              onChange={(e) => setTaskDue(e.target.value)}
-              required
-            />
-            <Input
-              label="Penalty"
-              type="number"
-              min={1}
-              value={String(taskPenalty)}
-              onChange={(e) => setTaskPenalty(Number(e.target.value))}
-              required
-            />
-            {createTaskMutation.error ? (
-              <p className="text-sm text-rose-200">{(createTaskMutation.error as Error).message}</p>
-            ) : null}
-            <div className="flex justify-end">
-              <Button type="submit" variant="primary" disabled={createTaskMutation.isPending || !taskTitle.trim()}>
-                {createTaskMutation.isPending ? 'Creating…' : 'Create'}
-              </Button>
-            </div>
-          </form>
-        ) : null}
-
-        <div className="mt-4 grid gap-2">
-          {filteredAndSortedTasks.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-800 p-4 text-slate-300">
-              {data.tasks.length === 0
-                ? `No tasks yet${canCreateTasks ? ' — create the first one.' : '.'}`
-                : 'No tasks match your filters.'}
-            </div>
-          ) : (
-            filteredAndSortedTasks.map((t) => {
-              // Check if overdue - compare in PST
-              const duePST = toPSTDate(t.dueAt)
-              const isOverdue = duePST < pstNow && !isDoneStatus(t.myStatus)
-              const needsGrade = (t.type === 'EXAM' || t.type === 'ASSIGNMENT') && t.myStatus !== 'DONE'
-
-              return (
-                <div key={t.id} className="flex flex-col gap-2 rounded-lg border border-slate-800 bg-slate-950/30 p-4">
-                  <div className="flex flex-col">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{t.title}</span>
-                      <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-200">
-                        {formatEnumValue(t.type)}
-                      </span>
-                      <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-200">
-                        {formatEnumValue(t.myStatus)}
-                      </span>
-                      {t.myGradeLetter && (
-                        <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-emerald-300">
-                          Grade: {t.myGradeLetter}
-                          {t.myGradePercent ? ` (${t.myGradePercent}%)` : ''}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm text-slate-300">
-                      <span className={isOverdue ? 'font-medium text-rose-300' : ''}>
-                        Due {formatLocalDateTime(t.dueAt)}
-                      </span>{' '}
-                      • penalty {t.penalty} • {t.stats.doneCount}/{t.stats.totalCount} done
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {t.myStatus === 'DONE' ? (
-                      <Button
-                        onClick={() => completeMutation.mutate({ taskId: t.id, status: 'NOT_DONE' })}
-                        disabled={completeMutation.isPending}
-                      >
-                        Undo
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => {
-                          if (needsGrade) {
-                            setGradeTaskId(t.id)
-                            setGradeMode('percent')
-                            setGradePercent('')
-                            setGradeLetter('A')
-                          } else {
-                            completeMutation.mutate({ taskId: t.id, status: 'DONE' })
-                          }
-                        }}
-                        variant="primary"
-                        disabled={completeMutation.isPending}
-                      >
-                        Mark done
-                      </Button>
-                    )}
-                  </div>
-
-                  {gradeTaskId === t.id && (
-                    <div className="mt-2 rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                      <div className="text-sm font-medium text-slate-200 mb-2">Enter your grade:</div>
-                      <div className="flex flex-wrap items-end gap-3">
-                        <label className="flex items-center gap-2 text-sm text-slate-200">
-                          <input
-                            type="radio"
-                            name={`gradeMode-${t.id}`}
-                            checked={gradeMode === 'percent'}
-                            onChange={() => setGradeMode('percent')}
-                          />
-                          <span>Percent</span>
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-200">
-                          <input
-                            type="radio"
-                            name={`gradeMode-${t.id}`}
-                            checked={gradeMode === 'letter'}
-                            onChange={() => setGradeMode('letter')}
-                          />
-                          <span>Letter</span>
-                        </label>
-
-                        {gradeMode === 'percent' ? (
-                          <Input
-                            label="Percent (0-100)"
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={gradePercent}
-                            onChange={(e) => setGradePercent(e.target.value)}
-                            className="w-32"
-                          />
-                        ) : (
-                          <label className="flex flex-col gap-1 text-sm">
-                            <span className="text-slate-200">Letter</span>
-                            <select
-                              className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-slate-100"
-                              value={gradeLetter}
-                              onChange={(e) =>
-                                setGradeLetter(
-                                  e.target.value as 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-' | 'D' | 'F',
-                                )
-                              }
-                            >
-                              <option value="A+">A+</option>
-                              <option value="A">A</option>
-                              <option value="A-">A-</option>
-                              <option value="B+">B+</option>
-                              <option value="B">B</option>
-                              <option value="B-">B-</option>
-                              <option value="C+">C+</option>
-                              <option value="C">C</option>
-                              <option value="C-">C-</option>
-                              <option value="D">D</option>
-                              <option value="F">F</option>
-                            </select>
-                          </label>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button
-                            variant="primary"
-                            onClick={() => {
-                              if (gradeMode === 'percent') {
-                                const n = Number(gradePercent)
-                                if (!Number.isFinite(n) || n < 0 || n > 100) {
-                                  alert('Please enter a valid percent (0-100)')
-                                  return
-                                }
-                                completeMutation.mutate({ taskId: t.id, status: 'DONE', gradePercent: n })
-                              } else {
-                                completeMutation.mutate({ taskId: t.id, status: 'DONE', gradeLetter })
-                              }
-                            }}
-                            disabled={completeMutation.isPending}
-                          >
-                            Submit
-                          </Button>
-                          <Button
-                            onClick={() => setGradeTaskId(null)}
-                            disabled={completeMutation.isPending}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                      {completeMutation.error ? (
-                        <p className="mt-2 text-sm text-rose-200">{(completeMutation.error as Error).message}</p>
-                      ) : null}
-                    </div>
-                  )}
-                </div>
-              )
-            })
-          )}
+            Back
+          </Link>
         </div>
-      </section>
 
-      {data.group.mode === 'FRIEND' && data.leaderboard?.length ? (
-        <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-          <h2 className="text-lg font-medium">Leaderboard</h2>
-          <div className="mt-3 grid gap-2">
-            {data.leaderboard.map((row) => (
-              <div
-                key={row.user.id}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3"
-              >
-                <div className="font-medium">{row.user.displayName}</div>
-                <div className="text-sm text-slate-300">
-                  done {row.doneCount} • missed {row.missedCount}
+        {/* Main content grid */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left column - Pet and Health */}
+          <div className="lg:col-span-2">
+            {/* Pet Section */}
+            <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col items-center">
+                <h2 className="mb-4 text-2xl font-bold text-blue-900">ProtectPibble</h2>
+                <img
+                  src={petImageSrc}
+                  alt={data.pet.name}
+                  className="mb-4 h-48 w-48 object-contain"
+                />
+                <div className="w-full">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-900">Health</span>
+                    <span className="text-sm font-bold text-blue-900">HP {data.pet.health}</span>
+                  </div>
+                  <div className="h-6 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className={`h-full transition-all ${healthColor}`}
+                      style={{ width: `${healthPercent}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-        <h2 className="text-lg font-medium">Activity</h2>
-        <div className="mt-3 grid gap-2">
-          {data.recentEvents.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-800 p-4 text-slate-300">
-              Activity will appear here.
             </div>
-          ) : (
-            data.recentEvents.slice(0, 15).map((e, idx) => {
-              // Find task name and type if taskId exists
-              const task = e.taskId ? data.tasks.find(t => t.id === e.taskId) : null
-              const taskName = task?.title || null
-              const taskType = task?.type || null
-              
-              // Format event message
-              let eventText = ''
-              if (e.type === 'TASK_COMPLETED' && taskName) {
-                eventText = `${taskName} completed`
-              } else if (e.type === 'TASK_MISSED' && taskName) {
-                eventText = `${taskName} missed`
-              } else if (e.type === 'TASK_CREATED' && taskName) {
-                eventText = `Created ${taskName}`
-              } else {
-                // Fallback to formatted enum value
-                eventText = formatEnumValue(e.type)
-              }
-              
-              // Determine what to show as the "actor" - use task type if no actor and task exists
-              let actorDisplay = e.actor?.displayName
-              if (!actorDisplay && taskType && (e.type === 'TASK_MISSED' || e.type === 'TASK_COMPLETED')) {
-                actorDisplay = formatEnumValue(taskType)
-              } else if (!actorDisplay) {
-                actorDisplay = 'System'
-              }
-              
-              return (
-                <div key={idx} className="rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3">
-                  <div className="text-sm text-slate-200">
-                    {data.group.mode === 'FRIEND' ? (
-                      <>
-                        <span className="font-medium">{actorDisplay}</span> {eventText}
-                        {typeof e.delta === 'number' && e.delta !== 0 ? (
-                          <span className={e.delta >= 0 ? 'ml-2 text-emerald-300 font-medium' : 'ml-2 text-rose-300 font-medium'}>
-                            {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
-                          </span>
-                        ) : null}
-                        {e.target?.displayName ? (
-                          <>
-                            {' '}
-                            → <span className="font-medium">{e.target.displayName}</span>
-                          </>
-                        ) : null}
-                      </>
-                    ) : (
-                      <>
-                        {e.message || eventText}
-                        {typeof e.delta === 'number' && e.delta !== 0 ? (
-                          <span className={e.delta >= 0 ? 'ml-2 text-emerald-300' : 'ml-2 text-rose-300'}>
-                            {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
-                          </span>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">{formatLocalDateTime(e.createdAt)}</div>
+
+            {/* Tasks Section */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-blue-900">Tasks</h2>
+                <div className="flex gap-2">
+                  <Button onClick={() => setFiltersOpen((v) => !v)}>
+                    {filtersOpen ? 'Hide Filters' : 'Filter'}
+                  </Button>
+                  {canCreateTasks ? (
+                    <Button onClick={() => setShowCreate((v) => !v)} variant="primary">
+                      {showCreate ? 'Close' : 'Create'}
+                    </Button>
+                  ) : null}
                 </div>
-              )
-            })
-          )}
+              </div>
+
+              {filtersOpen && (
+                <div className="mb-4 grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Input
+                      label="Search"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search tasks..."
+                    />
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span className="text-blue-900 font-medium">Due date</span>
+                      <select
+                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        value={dueFilter}
+                        onChange={(e) => setDueFilter(e.target.value as DueFilter)}
+                      >
+                        <option value="ALL">All</option>
+                        <option value="OVERDUE">Overdue</option>
+                        <option value="TODAY">Today</option>
+                        <option value="NEXT_7D">Next 7 days</option>
+                        <option value="NEXT_30D">Next 30 days</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span className="text-blue-900 font-medium">Status</span>
+                      <select
+                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                      >
+                        <option value="ALL">All</option>
+                        <option value="NOT_DONE">Not done</option>
+                        <option value="DONE">Done</option>
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span className="text-blue-900 font-medium">Sort by</span>
+                      <select
+                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as SortBy)}
+                      >
+                        <option value="DUE_DATE">Due date</option>
+                        <option value="PENALTY">Penalty (high to low)</option>
+                        <option value="TITLE">Title (A-Z)</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm font-medium text-blue-900">Types</div>
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+                      {(Object.keys(typeFilters) as TaskType[]).map((tt) => (
+                        <label
+                          key={tt}
+                          className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-blue-900"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={typeFilters[tt]}
+                            onChange={(e) => setTypeFilters((p) => ({ ...p, [tt]: e.target.checked }))}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                          />
+                          <span>{tt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2">
+                    <Button onClick={resetFilters}>Reset</Button>
+                  </div>
+                </div>
+              )}
+
+              {showCreate ? (
+                <form
+                  className="mb-4 grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    createTaskMutation.mutate()
+                  }}
+                >
+                  <Input label="Title" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} required />
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-blue-900 font-medium">Type</span>
+                    <select
+                      className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      value={taskType}
+                      onChange={(e) => setTaskType(e.target.value as TaskType)}
+                    >
+                      <option value="ASSIGNMENT">Assignment</option>
+                      <option value="QUIZ">Quiz</option>
+                      <option value="LECTURE">Lecture</option>
+                      <option value="EXAM">Exam</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </label>
+                  <Input
+                    label="Due at"
+                    type="datetime-local"
+                    value={taskDue}
+                    onChange={(e) => setTaskDue(e.target.value)}
+                    required
+                  />
+                  <Input
+                    label="Penalty"
+                    type="number"
+                    min={1}
+                    value={String(taskPenalty)}
+                    onChange={(e) => setTaskPenalty(Number(e.target.value))}
+                    required
+                  />
+                  {createTaskMutation.error ? (
+                    <p className="text-sm text-red-600">{(createTaskMutation.error as Error).message}</p>
+                  ) : null}
+                  <div className="flex justify-end">
+                    <Button type="submit" variant="primary" disabled={createTaskMutation.isPending || !taskTitle.trim()}>
+                      {createTaskMutation.isPending ? 'Creating…' : 'Create'}
+                    </Button>
+                  </div>
+                </form>
+              ) : null}
+
+              <div className="grid gap-3">
+                {filteredAndSortedTasks.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-blue-700">
+                    {data.tasks.length === 0
+                      ? `No tasks yet${canCreateTasks ? ' — create the first one.' : '.'}`
+                      : 'No tasks match your filters.'}
+                  </div>
+                ) : (
+                  filteredAndSortedTasks.map((t) => {
+                    // Check if overdue - compare in PST
+                    const duePST = toPSTDate(t.dueAt)
+                    const isOverdue = duePST < pstNow && !isDoneStatus(t.myStatus)
+                    const needsGrade = (t.type === 'EXAM' || t.type === 'ASSIGNMENT') && t.myStatus !== 'DONE'
+
+                    return (
+                      <div key={t.id} className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium text-blue-900">{t.title}</span>
+                              <span className="rounded-full border border-gray-300 bg-gray-100 px-2 py-0.5 text-xs text-blue-700">
+                                {formatEnumValue(t.type)}
+                              </span>
+                              <span className="rounded-full border border-gray-300 bg-gray-100 px-2 py-0.5 text-xs text-blue-700">
+                                {formatEnumValue(t.myStatus)}
+                              </span>
+                              {t.myGradeLetter && (
+                                <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                                  Grade: {t.myGradeLetter}
+                                  {t.myGradePercent ? ` (${t.myGradePercent}%)` : ''}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-1 text-sm text-blue-700">
+                              <span className={isOverdue ? 'font-medium text-red-600' : ''}>
+                                Due {formatLocalDateTime(t.dueAt)}
+                              </span>
+                              {' • '}
+                              <span>penalty {t.penalty}</span>
+                              {' • '}
+                              <span>{t.stats.doneCount}/{t.stats.totalCount} done</span>
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            {t.myStatus === 'DONE' ? (
+                              <Button
+                                onClick={() => completeMutation.mutate({ taskId: t.id, status: 'NOT_DONE' })}
+                                disabled={completeMutation.isPending}
+                              >
+                                Undo
+                              </Button>
+                            ) : (
+                              <Button
+                                onClick={() => {
+                                  if (needsGrade) {
+                                    setGradeTaskId(t.id)
+                                    setGradeMode('percent')
+                                    setGradePercent('')
+                                    setGradeLetter('A')
+                                  } else {
+                                    completeMutation.mutate({ taskId: t.id, status: 'DONE' })
+                                  }
+                                }}
+                                variant="primary"
+                                disabled={completeMutation.isPending}
+                              >
+                                Mark Done
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {gradeTaskId === t.id && (
+                          <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <div className="mb-3 text-sm font-medium text-blue-900">Enter your grade:</div>
+                            <div className="flex flex-wrap items-end gap-3">
+                              <label className="flex items-center gap-2 text-sm text-blue-900">
+                                <input
+                                  type="radio"
+                                  name={`gradeMode-${t.id}`}
+                                  checked={gradeMode === 'percent'}
+                                  onChange={() => setGradeMode('percent')}
+                                  className="text-blue-600 focus:ring-blue-400"
+                                />
+                                <span>Percent</span>
+                              </label>
+                              <label className="flex items-center gap-2 text-sm text-blue-900">
+                                <input
+                                  type="radio"
+                                  name={`gradeMode-${t.id}`}
+                                  checked={gradeMode === 'letter'}
+                                  onChange={() => setGradeMode('letter')}
+                                  className="text-blue-600 focus:ring-blue-400"
+                                />
+                                <span>Letter</span>
+                              </label>
+
+                              {gradeMode === 'percent' ? (
+                                <Input
+                                  label="Percent (0-100)"
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  value={gradePercent}
+                                  onChange={(e) => setGradePercent(e.target.value)}
+                                  className="w-32"
+                                />
+                              ) : (
+                                <label className="flex flex-col gap-1 text-sm">
+                                  <span className="text-blue-900 font-medium">Letter</span>
+                                  <select
+                                    className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    value={gradeLetter}
+                                    onChange={(e) =>
+                                      setGradeLetter(
+                                        e.target.value as 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'C-' | 'D' | 'F',
+                                      )
+                                    }
+                                  >
+                                    <option value="A+">A+</option>
+                                    <option value="A">A</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B">B</option>
+                                    <option value="B-">B-</option>
+                                    <option value="C+">C+</option>
+                                    <option value="C">C</option>
+                                    <option value="C-">C-</option>
+                                    <option value="D">D</option>
+                                    <option value="F">F</option>
+                                  </select>
+                                </label>
+                              )}
+
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="primary"
+                                  onClick={() => {
+                                    if (gradeMode === 'percent') {
+                                      const n = Number(gradePercent)
+                                      if (!Number.isFinite(n) || n < 0 || n > 100) {
+                                        alert('Please enter a valid percent (0-100)')
+                                        return
+                                      }
+                                      completeMutation.mutate({ taskId: t.id, status: 'DONE', gradePercent: n })
+                                    } else {
+                                      completeMutation.mutate({ taskId: t.id, status: 'DONE', gradeLetter })
+                                    }
+                                  }}
+                                  disabled={completeMutation.isPending}
+                                >
+                                  Submit
+                                </Button>
+                                <Button
+                                  onClick={() => setGradeTaskId(null)}
+                                  disabled={completeMutation.isPending}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                            {completeMutation.error ? (
+                              <p className="mt-2 text-sm text-red-600">{(completeMutation.error as Error).message}</p>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right column - Leaderboard and Activity */}
+          <div className="space-y-6">
+
+            {/* Leaderboard */}
+            {data.group.mode === 'FRIEND' && data.leaderboard?.length ? (
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h2 className="mb-3 text-xl font-bold text-blue-900">Leaderboard</h2>
+                <div className="grid gap-2">
+                  {data.leaderboard.map((row, idx) => (
+                    <div
+                      key={row.user.id}
+                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+                    >
+                      <div className="font-medium text-blue-900">
+                        {idx + 1}. {row.user.displayName}
+                      </div>
+                      <div className="text-sm text-blue-700">
+                        Done {row.doneCount} Missed {row.missedCount}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Activity Log */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-xl font-bold text-blue-900">Activity Log</h2>
+              <div className="grid gap-2">
+                {data.recentEvents.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-blue-700">
+                    Activity will appear here.
+                  </div>
+                ) : (
+                  data.recentEvents.slice(0, 15).map((e, idx) => {
+                    // Find task name and type if taskId exists
+                    const task = e.taskId ? data.tasks.find(t => t.id === e.taskId) : null
+                    const taskName = task?.title || null
+                    const taskType = task?.type || null
+                    
+                    // Format event message
+                    let eventText = ''
+                    if (e.type === 'TASK_COMPLETED' && taskName) {
+                      eventText = `${taskName} completed`
+                    } else if (e.type === 'TASK_MISSED' && taskName) {
+                      eventText = `${taskName} missed`
+                    } else if (e.type === 'TASK_CREATED' && taskName) {
+                      eventText = `Created ${taskName}`
+                    } else {
+                      // Fallback to formatted enum value
+                      eventText = formatEnumValue(e.type)
+                    }
+                    
+                    // Determine what to show as the "actor" - use task type if no actor and task exists
+                    let actorDisplay = e.actor?.displayName
+                    if (!actorDisplay && taskType && (e.type === 'TASK_MISSED' || e.type === 'TASK_COMPLETED')) {
+                      actorDisplay = formatEnumValue(taskType)
+                    } else if (!actorDisplay) {
+                      actorDisplay = 'System'
+                    }
+                    
+                    return (
+                      <div key={idx} className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                        <div className="text-sm text-blue-900">
+                          {data.group.mode === 'FRIEND' ? (
+                            <>
+                              <span className="font-medium">{actorDisplay}</span> {eventText}
+                              {typeof e.delta === 'number' && e.delta !== 0 ? (
+                                <span className={e.delta >= 0 ? 'ml-2 font-medium text-green-600' : 'ml-2 font-medium text-red-600'}>
+                                  {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
+                                </span>
+                              ) : null}
+                              {e.target?.displayName ? (
+                                <>
+                                  {' '}
+                                  → <span className="font-medium">{e.target.displayName}</span>
+                                </>
+                              ) : null}
+                            </>
+                          ) : (
+                            <>
+                              {e.message || eventText}
+                              {typeof e.delta === 'number' && e.delta !== 0 ? (
+                                <span className={e.delta >= 0 ? 'ml-2 text-green-600' : 'ml-2 text-red-600'}>
+                                  {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
+                                </span>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
+                        <div className="mt-1 text-xs text-blue-600">{formatLocalDateTime(e.createdAt)}</div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }
