@@ -16,11 +16,23 @@ type StatusFilter = 'ALL' | 'DONE' | 'NOT_DONE'
 type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 
 function formatLocalDateTime(iso: string) {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
+  // Ensure the date string is treated as UTC
+  // FastAPI sends datetime as ISO strings - ensure we parse as UTC
+  let dateString = iso.trim()
   
-  // Convert UTC to PST/PDT using JavaScript's built-in timezone support
-  // This automatically handles daylight saving time (PST vs PDT)
+  // If no timezone indicator, explicitly add 'Z' to indicate UTC
+  if (!dateString.endsWith('Z') && !dateString.match(/[+-]\d{2}:?\d{2}$/)) {
+    dateString = dateString + 'Z'
+  }
+  
+  // Create date object - this will be in UTC internally
+  const d = new Date(dateString)
+  if (Number.isNaN(d.getTime())) {
+    return iso
+  }
+  
+  // Use Intl.DateTimeFormat to convert UTC to PST/PDT
+  // This is the most reliable way to handle timezone conversion with DST
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Los_Angeles',
     month: 'short',
@@ -32,16 +44,15 @@ function formatLocalDateTime(iso: string) {
     timeZoneName: 'short',
   })
   
-  const parts = formatter.formatToParts(d)
-  const month = parts.find(p => p.type === 'month')?.value || ''
-  const day = parts.find(p => p.type === 'day')?.value || ''
-  const year = parts.find(p => p.type === 'year')?.value || ''
-  const hour = parts.find(p => p.type === 'hour')?.value || ''
-  const minute = parts.find(p => p.type === 'minute')?.value || ''
-  const dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value?.toUpperCase() || ''
-  const timeZoneName = parts.find(p => p.type === 'timeZoneName')?.value || 'PST'
+  // Format the date - this will automatically convert from UTC to PST/PDT
+  const formatted = formatter.format(d)
   
-  return `${month} ${day}, ${year}, ${hour}:${minute} ${dayPeriod} ${timeZoneName}`
+  // Extract components from formatted string
+  // Format will be like: "Jan 15, 2024, 02:30 PM PST" or "Jan 15, 2024, 02:30:00 PM PST"
+  // Remove seconds if present
+  const cleaned = formatted.replace(/:\d{2}\s/, ' ')
+  
+  return cleaned
 }
 
 function formatEnumValue(value: string): string {
