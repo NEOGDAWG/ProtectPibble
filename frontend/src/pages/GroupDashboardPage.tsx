@@ -701,9 +701,10 @@ export function GroupDashboardPage() {
             </div>
           ) : (
             data.recentEvents.slice(0, 15).map((e, idx) => {
-              // Find task name if taskId exists
+              // Find task name and type if taskId exists
               const task = e.taskId ? data.tasks.find(t => t.id === e.taskId) : null
               const taskName = task?.title || null
+              const taskType = task?.type || null
               
               // Format event message
               let eventText = ''
@@ -718,12 +719,20 @@ export function GroupDashboardPage() {
                 eventText = formatEnumValue(e.type)
               }
               
+              // Determine what to show as the "actor" - use task type if no actor and task exists
+              let actorDisplay = e.actor?.displayName
+              if (!actorDisplay && taskType && (e.type === 'TASK_MISSED' || e.type === 'TASK_COMPLETED')) {
+                actorDisplay = formatEnumValue(taskType)
+              } else if (!actorDisplay) {
+                actorDisplay = 'System'
+              }
+              
               return (
                 <div key={idx} className="rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3">
                   <div className="text-sm text-slate-200">
                     {data.group.mode === 'FRIEND' ? (
                       <>
-                        <span className="font-medium">{e.actor?.displayName ?? 'System'}</span> {eventText}
+                        <span className="font-medium">{actorDisplay}</span> {eventText}
                         {typeof e.delta === 'number' && e.delta !== 0 ? (
                           <span className={e.delta >= 0 ? 'ml-2 text-emerald-300 font-medium' : 'ml-2 text-rose-300 font-medium'}>
                             {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
