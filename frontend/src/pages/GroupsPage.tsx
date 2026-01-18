@@ -68,6 +68,10 @@ export function GroupsPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['myGroups'] })
     },
+    onError: (error) => {
+      console.error('Failed to delete group:', error)
+      alert(`Failed to delete group: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    },
   })
 
   const canCreate = useMemo(() => {
