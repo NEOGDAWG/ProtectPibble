@@ -23,8 +23,10 @@ postgresql://postgres:LQvKoahivCVPEySOsRXQWFCjxEinQlWy@nozomi.proxy.rlwy.net:260
 
    **Variable 1:**
    - Name: `DATABASE_URL`
-   - Value: `postgresql+psycopg://postgres:LQvKoahivCVPEySOsRXQWFCjxEinQlWy@nozomi.proxy.rlwy.net:26029/railway`
+   - Value: `${{ Postgres.DATABASE_URL }}`
    - Click "Add"
+   
+   **Note:** Railway will automatically replace `${{ Postgres.DATABASE_URL }}` with the actual database connection string from your PostgreSQL service.
 
    **Variable 2:**
    - Name: `ENV`

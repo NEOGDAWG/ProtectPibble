@@ -83,8 +83,10 @@ Railway will host both your backend AND provide the database. Much simpler!
    **Variable 1:**
    - Click "New Variable"
    - Name: `DATABASE_URL`
-   - Value: Copy the `DATABASE_URL` from your PostgreSQL service (Step 2.2)
+   - Value: `${{ Postgres.DATABASE_URL }}`
    - Click "Add"
+   
+   **Note:** `${{ Postgres.DATABASE_URL }}` is Railway's syntax to automatically reference the database connection from your PostgreSQL service. Railway will replace this with the actual connection string.
 
    **Variable 2:**
    - Click "New Variable"
