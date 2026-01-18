@@ -24,6 +24,7 @@ export type GroupSummary = {
   class: ClassRef
   petHealth?: number | null
   petMaxHealth?: number | null
+  isCreator?: boolean
 }
 
 export type MyGroupsResponse = { groups: GroupSummary[] }

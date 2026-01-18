@@ -23,6 +23,7 @@ class GroupSummary(ApiModel):
     class_: ClassRef = Field(alias="class")
     pet_health: Optional[int] = None
     pet_max_health: Optional[int] = None
+    is_creator: bool = False
 
 
 class CreateGroupRequest(ApiModel):

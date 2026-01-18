@@ -131,6 +131,8 @@ export const api = {
     apiFetch<import('./types').CreateGroupResponse>('/groups', { method: 'POST', json: req }),
   joinGroup: (req: import('./types').JoinGroupRequest) =>
     apiFetch<import('./types').JoinGroupResponse>('/groups/join', { method: 'POST', json: req }),
+  deleteGroup: (groupId: string) =>
+    apiFetch<{ ok: boolean }>(`/groups/${groupId}`, { method: 'DELETE' }),
 
   getGroupState: (groupId: string) =>
     apiFetch<import('./types').GroupStateResponse>(`/groups/${groupId}/state`),

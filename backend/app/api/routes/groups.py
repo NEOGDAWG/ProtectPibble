@@ -30,11 +30,14 @@ from app.utils.invite_codes import generate_invite_code
 router = APIRouter(prefix="/groups")
 
 
-def _serialize_group_summary(group: Group, role: GroupRole, klass: Class, db: Session) -> GroupSummary:
+def _serialize_group_summary(group: Group, role: GroupRole, klass: Class, db: Session, user: CurrentUser) -> GroupSummary:
     # Get pet health for preview
     pet = db.scalar(select(Pet).where(Pet.group_id == group.id))
     pet_health = pet.health if pet else None
     pet_max_health = pet.max_health if pet else None
+    
+    # Check if user is the creator
+    is_creator = group.created_by_id == user.id
     
     return GroupSummary(
         id=str(group.id),
@@ -45,6 +48,7 @@ def _serialize_group_summary(group: Group, role: GroupRole, klass: Class, db: Se
         class_={"code": klass.code, "term": klass.term, "school": klass.school},
         pet_health=pet_health,
         pet_max_health=pet_max_health,
+        is_creator=is_creator,
     )
 
 
@@ -98,7 +102,7 @@ def create_group(
 
     db.commit()
 
-    return CreateGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass, db=db))
+    return CreateGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass, db=db, user=user))
 
 
 @router.post("/join", response_model=JoinGroupResponse)
@@ -131,7 +135,7 @@ def join_group(
     klass = db.scalar(select(Class).where(Class.id == group.class_id))
     assert klass is not None
 
-    return JoinGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass, db=db))
+    return JoinGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass, db=db, user=user))
 
 
 @router.get("/my", response_model=MyGroupsResponse)
@@ -153,10 +157,33 @@ def my_groups(
         apply_deadline_penalties_for_group(db, group_id=str(g.id))
 
     groups = [
-        _serialize_group_summary(group=g, role=m.role, klass=c, db=db)
+        _serialize_group_summary(group=g, role=m.role, klass=c, db=db, user=user)
         for (g, m, c) in rows
     ]
     return MyGroupsResponse(groups=groups)
+
+
+@router.delete("/{group_id}")
+def delete_group(
+    group_id: str,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+) -> dict:
+    """Delete a group. Only the creator can delete it."""
+    group = db.scalar(select(Group).where(Group.id == group_id))
+    if group is None:
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+    
+    # Only the creator can delete the group
+    if group.created_by_id != user.id:
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the group creator can delete the group")
+    
+    # Delete the group (cascade will handle related records)
+    db.delete(group)
+    db.commit()
+    return {"ok": True}
 
 
 @router.get("/{group_id}/state", response_model=GroupStateResponse)

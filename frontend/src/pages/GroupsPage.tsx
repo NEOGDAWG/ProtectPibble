@@ -63,6 +63,13 @@ export function GroupsPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (groupId: string) => api.deleteGroup(groupId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['myGroups'] })
+    },
+  })
+
   const canCreate = useMemo(() => {
     return (
       createForm.classCode.trim() &&
@@ -251,16 +258,36 @@ export function GroupsPage() {
                   const petImageSrc = getPetImage(petHealth, petMaxHealth)
                   
                   return (
-                    <Link
-                      key={g.id}
-                      to={`/groups/${g.id}`}
-                      className="flex flex-col gap-3 rounded-xl px-4 py-3 transition-all duration-200 hover:opacity-90 hover:shadow-md hover:-translate-y-0.5 w-fit"
-                      style={{ backgroundColor: '#f2f7fa' }}
-                    >
+                    <div key={g.id} className="flex flex-col gap-3 rounded-xl px-4 py-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 w-fit" style={{ backgroundColor: '#f2f7fa' }}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-normal" style={{ color: '#314479' }}>{g.name}</span>
-                        <ModeBadge mode={g.mode} />
+                        <Link
+                          to={`/groups/${g.id}`}
+                          className="flex items-center gap-2 flex-1 hover:opacity-90"
+                        >
+                          <span className="text-lg font-normal" style={{ color: '#314479' }}>{g.name}</span>
+                          <ModeBadge mode={g.mode} />
+                        </Link>
+                        {g.isCreator && (
+                          <Button
+                            variant="danger"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              if (window.confirm(`Are you sure you want to delete "${g.name}"? This will permanently delete the group for all members.`)) {
+                                deleteMutation.mutate(g.id)
+                              }
+                            }}
+                            disabled={deleteMutation.isPending}
+                            className="ml-2"
+                          >
+                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                          </Button>
+                        )}
                       </div>
+                      <Link
+                        to={`/groups/${g.id}`}
+                        className="flex flex-col gap-3 hover:opacity-90"
+                      >
                       <div className="text-sm font-normal" style={{ color: '#5e9bd4' }}>
                         {g.class.code} • {g.class.term}
                       </div>
@@ -285,7 +312,8 @@ export function GroupsPage() {
                         </div>
                       </div>
                       <div className="text-xs font-normal" style={{ color: '#5e9bd4' }}>Invite: {g.inviteCode}</div>
-                    </Link>
+                      </Link>
+                    </div>
                   )
                 })
               ) : (
