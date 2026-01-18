@@ -49,6 +49,19 @@ export function GroupDashboardPage() {
   const { data, isLoading, error, dataUpdatedAt } = useGroupState(groupId)
 
   const [nowMs, setNowMs] = useState(() => Date.now())
+  const [pstTime, setPstTime] = useState(() => {
+    const now = new Date()
+    return now.toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  })
   const [showCreate, setShowCreate] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskType, setTaskType] = useState<TaskType>('ASSIGNMENT')
@@ -77,7 +90,25 @@ export function GroupDashboardPage() {
 
   // eslint rule: avoid Date.now() in render; update clock via effect.
   useEffect(() => {
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000)
+    const updateClock = () => {
+      setNowMs(Date.now())
+      // Update PST time
+      const now = new Date()
+      const pstString = now.toLocaleString('en-US', {
+        timeZone: 'America/Los_Angeles',
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+      setPstTime(pstString)
+    }
+    
+    updateClock() // Update immediately
+    const id = window.setInterval(updateClock, 1000)
     return () => window.clearInterval(id)
   }, [])
 
@@ -100,13 +131,79 @@ export function GroupDashboardPage() {
   })
 
   const createTaskMutation = useMutation({
-    mutationFn: () =>
-      api.createTask(groupId, {
+    mutationFn: () => {
+      // Convert datetime-local input to PST time, then to ISO string
+      // datetime-local gives us a string like "2026-01-18T14:30" with no timezone
+      // We need to interpret this as PST (America/Los_Angeles) time
+      
+      if (!taskDue) {
+        throw new Error('Due date is required')
+      }
+      
+      // Parse the datetime-local string (format: "YYYY-MM-DDTHH:mm")
+      const [datePart, timePart] = taskDue.split('T')
+      if (!datePart || !timePart) {
+        throw new Error('Invalid date format')
+      }
+      
+      const [year, month, day] = datePart.split('-').map(Number)
+      const [hours, minutes] = timePart.split(':').map(Number)
+      
+      // Create a date string representing the PST time we want
+      const pstDateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+      
+      // We need to find a UTC date that, when converted to PST, gives us the desired time
+      // Strategy: try different UTC times and check what PST time they represent
+      // Start with assuming PST = UTC-8 (PST) or UTC-7 (PDT)
+      
+      // Check if DST is in effect for the target date
+      // Create a test date in the middle of the target day to check DST
+      const testDate = new Date(year, month - 1, day, 12, 0, 0) // Noon on target day
+      const pstTest = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Los_Angeles',
+        timeZoneName: 'short',
+      }).formatToParts(testDate)
+      const isDST = pstTest.find(p => p.type === 'timeZoneName')?.value === 'PDT'
+      
+      // PST is UTC-8, PDT is UTC-7
+      const offsetHours = isDST ? 7 : 8
+      
+      // Create UTC date: add offset hours to get the UTC time that represents our PST time
+      const utcDate = new Date(Date.UTC(year, month - 1, day, hours + offsetHours, minutes, 0))
+      
+      // Verify: check what PST time this UTC date represents
+      const verifyPST = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).formatToParts(utcDate)
+      
+      const verifyYear = parseInt(verifyPST.find(p => p.type === 'year')?.value || '0')
+      const verifyMonth = parseInt(verifyPST.find(p => p.type === 'month')?.value || '0')
+      const verifyDay = parseInt(verifyPST.find(p => p.type === 'day')?.value || '0')
+      const verifyHour = parseInt(verifyPST.find(p => p.type === 'hour')?.value || '0')
+      const verifyMinute = parseInt(verifyPST.find(p => p.type === 'minute')?.value || '0')
+      
+      // If verification doesn't match, adjust
+      if (verifyYear !== year || verifyMonth !== month || verifyDay !== day || verifyHour !== hours || verifyMinute !== minutes) {
+        // Calculate the difference and adjust
+        const hourDiff = hours - verifyHour
+        const minuteDiff = minutes - verifyMinute
+        const adjustmentMs = (hourDiff * 60 + minuteDiff) * 60 * 1000
+        utcDate.setTime(utcDate.getTime() + adjustmentMs)
+      }
+      
+      return api.createTask(groupId, {
         title: taskTitle,
         type: taskType,
-        dueAt: new Date(taskDue).toISOString(),
+        dueAt: utcDate.toISOString(),
         penalty: taskPenalty,
-      }),
+      })
+    },
     onSuccess: async () => {
       setShowCreate(false)
       setTaskTitle('')
@@ -229,6 +326,9 @@ export function GroupDashboardPage() {
               {data.group.class.code} • {data.group.class.term}
               {secondsAgo !== null ? <span className="ml-2 text-slate-500">updated {secondsAgo}s ago</span> : null}
             </p>
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <span className="font-mono">PST: {pstTime}</span>
+            </div>
           </div>
           <div className="flex gap-2">
             <Link className="rounded-lg border border-slate-800 px-3 py-2 text-sm hover:bg-slate-900/40" to="/groups">
@@ -572,6 +672,25 @@ export function GroupDashboardPage() {
         </div>
       </section>
 
+      {data.group.mode === 'FRIEND' && data.leaderboard?.length ? (
+        <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+          <h2 className="text-lg font-medium">Leaderboard</h2>
+          <div className="mt-3 grid gap-2">
+            {data.leaderboard.map((row) => (
+              <div
+                key={row.user.id}
+                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3"
+              >
+                <div className="font-medium">{row.user.displayName}</div>
+                <div className="text-sm text-slate-300">
+                  done {row.doneCount} • missed {row.missedCount}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
         <h2 className="text-lg font-medium">Activity</h2>
         <div className="mt-3 grid gap-2">
@@ -615,25 +734,6 @@ export function GroupDashboardPage() {
           )}
         </div>
       </section>
-
-      {data.group.mode === 'FRIEND' && data.leaderboard?.length ? (
-        <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
-          <h2 className="text-lg font-medium">Leaderboard</h2>
-          <div className="mt-3 grid gap-2">
-            {data.leaderboard.map((row) => (
-              <div
-                key={row.user.id}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/30 px-4 py-3"
-              >
-                <div className="font-medium">{row.user.displayName}</div>
-                <div className="text-sm text-slate-300">
-                  done {row.doneCount} • missed {row.missedCount}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
     </div>
   )
 }
