@@ -151,22 +151,42 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // The datetime-local input gives us a time without timezone (e.g., "2026-01-18T06:57")
+      // The datetime-local input gives us a time without timezone (e.g., "2026-01-18T07:18")
       // We need to interpret this as PST time and convert it to UTC for storage
       // 
-      // Strategy: Use an iterative approach to find the UTC time that, when displayed in PST,
-      // equals the time the user entered. This handles DST transitions correctly.
+      // Strategy: Create a date string that represents the PST time, then find the UTC equivalent
+      // by using the browser's timezone conversion capabilities.
+      //
+      // Key insight: We need to create a Date object that, when formatted in PST, shows the time
+      // the user entered. The tricky part is that Date objects are always in UTC internally.
+      //
+      // Approach: Use a date string in ISO format with explicit timezone, but we can't do that
+      // directly. Instead, we'll use the fact that we can create a date and check what PST time
+      // it represents, then adjust.
       
-      // Start with an initial guess: assume PST is UTC-8 (or UTC-7 for DST)
-      // We'll check what PST time a UTC time represents and adjust until it matches
+      // Create a date string in the format that represents PST time
+      // We'll construct a date that represents the PST time, then convert to UTC
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
       
-      // Create a UTC date as initial guess (treating input as if it were UTC, then we'll adjust)
-      // Start with assuming PST = UTC-8 (standard time)
+      // Try creating a date by treating the input as if it were in a timezone-aware format
+      // We'll use a workaround: create a date in the user's local timezone that represents PST,
+      // but that's complex. Better: use Intl to find the UTC time.
+      
+      // Better approach: Create a test date and use binary search or iteration
+      // Start with a reasonable guess: PST is typically UTC-8, so UTC = PST + 8 hours
+      // But we need to handle DST (PDT = UTC-7)
+      
+      // Start with assuming PST (UTC-8)
+      let utcHour = hours + 8
+      if (utcHour >= 24) {
+        utcHour -= 24
+        // Would need to handle day rollover, but let's use Date object for that
+      }
+      
       let utcDate = new Date(Date.UTC(year, month - 1, day, hours + 8, minutes, 0))
       
-      // Iteratively adjust until we get the correct PST time
-      // This handles DST automatically since we're checking actual PST time, not assuming offset
-      for (let attempts = 0; attempts < 10; attempts++) {
+      // Verify and adjust iteratively
+      for (let attempts = 0; attempts < 15; attempts++) {
         // Check what PST time this UTC date represents
         const pstParts = new Intl.DateTimeFormat('en-US', {
           timeZone: 'America/Los_Angeles',
@@ -184,18 +204,25 @@ export function GroupDashboardPage() {
         const pstHour = parseInt(pstParts.find(p => p.type === 'hour')?.value || '0')
         const pstMinute = parseInt(pstParts.find(p => p.type === 'minute')?.value || '0')
         
-        // If it matches, we're done
+        // If it matches exactly, we're done
         if (pstYear === year && pstMonth === month && pstDay === day && pstHour === hours && pstMinute === minutes) {
           break
         }
         
-        // Calculate the difference and adjust
+        // Calculate the difference
+        // If displayed PST hour is less than input hour, we need to add time to UTC
+        // If displayed PST hour is more than input hour, we need to subtract time from UTC
         const hourDiff = hours - pstHour
         const minuteDiff = minutes - pstMinute
         const totalMinutesDiff = hourDiff * 60 + minuteDiff
         
         // Adjust the UTC date
         utcDate = new Date(utcDate.getTime() + totalMinutesDiff * 60 * 1000)
+        
+        // Safety check: if we're not making progress, break
+        if (totalMinutesDiff === 0) {
+          break
+        }
       }
       
       return api.createTask(groupId, {
