@@ -19,19 +19,19 @@ export function GroupsPage() {
     queryFn: api.getMyGroups,
     enabled: !!identity,
     retry: (failureCount, error) => {
-      // Don't retry on 401 - redirect to login instead
+      // Don't retry on 401 - token expired/invalid
       if (error instanceof Error && 'status' in error && (error as { status: number }).status === 401) {
+        logout()
+        navigate('/login')
         return false
       }
       return failureCount < 3
     },
   })
 
-  // Handle authentication errors
+  // Handle authentication errors - redirect to login
   if (error && error instanceof Error && 'status' in error && (error as { status: number }).status === 401) {
-    // Token expired or invalid - redirect to login
-    logout()
-    navigate('/login')
+    // This will be handled by retry function, but ensure we don't render
     return null
   }
 
