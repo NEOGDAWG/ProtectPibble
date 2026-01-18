@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 from app.schemas.base import ApiModel
 
 
 class RegisterRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)  # Allow both snake_case and camelCase
+    
     email: EmailStr
-    display_name: str = Field(..., min_length=1, max_length=120)
+    display_name: str = Field(..., min_length=1, max_length=120, alias="displayName")
     password: str = Field(..., min_length=8, max_length=100)
 
     @field_validator("password")
