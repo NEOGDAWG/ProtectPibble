@@ -18,7 +18,7 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  // Display exactly as stored - no conversion, just read UTC values directly
+  // Display PST time directly - no conversion, just read the UTC values as PST
   const year = d.getUTCFullYear()
   const month = d.toLocaleString('en-US', { month: 'short' })
   const day = String(d.getUTCDate()).padStart(2, '0')
@@ -149,9 +149,8 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // User is in PST and wants NO conversion - store and display exactly as entered
-      // Input: 7:20 AM PST -> Store as 7:20 AM UTC (no offset) -> Display as 7:20 AM PST
-      // Treat the input time as if it's already in UTC (naive time)
+      // User is in PST - treat input as PST, store it directly (no conversion)
+      // Input: 7:20 AM PST -> Store as 7:20 AM (treating as UTC for storage, but it's really PST)
       const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
       
       return api.createTask(groupId, {
