@@ -9,7 +9,11 @@ from app.db.sqlite_schema import ensure_sqlite_columns
 
 settings = get_settings()
 
-app = FastAPI(title=settings.app_name)
+app = FastAPI(
+    title=settings.app_name,
+    description="ProtectPibble - Collaborative class pet accountability app",
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,

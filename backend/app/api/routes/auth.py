@@ -19,13 +19,16 @@ def register(
     body: RegisterRequest,
     db: Session = Depends(get_db),
 ) -> AuthResponse:
-    """Register a new user with email and password."""
+    """Register a new user with email and password. Authentication required for all other endpoints."""
+    # Normalize email
+    email = body.email.lower().strip()
+    
     # Check if user already exists
-    existing = db.scalar(select(User).where(User.email == body.email.lower().strip()))
+    existing = db.scalar(select(User).where(User.email == email))
     if existing is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
+            detail="Email already registered. Please login instead.",
         )
 
     # Create new user

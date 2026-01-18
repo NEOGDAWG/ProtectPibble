@@ -18,7 +18,22 @@ export function GroupsPage() {
     queryKey: ['myGroups'],
     queryFn: api.getMyGroups,
     enabled: !!identity,
+    retry: (failureCount, error) => {
+      // Don't retry on 401 - redirect to login instead
+      if (error instanceof Error && 'status' in error && (error as { status: number }).status === 401) {
+        return false
+      }
+      return failureCount < 3
+    },
   })
+
+  // Handle authentication errors
+  if (error && error instanceof Error && 'status' in error && (error as { status: number }).status === 401) {
+    // Token expired or invalid - redirect to login
+    logout()
+    navigate('/login')
+    return null
+  }
 
   const [createForm, setCreateForm] = useState<CreateGroupRequest>({
     classCode: '',

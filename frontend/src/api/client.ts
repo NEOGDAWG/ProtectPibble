@@ -1,5 +1,5 @@
 import { camelizeKeys, decamelizeKeys } from './case'
-import { getAuthToken, getDemoIdentity } from '../auth/storage'
+import { clearAuthToken, getAuthToken } from '../auth/storage'
 
 function getApiBaseUrl(): string {
   const base = import.meta.env.VITE_API_BASE_URL as string | undefined
@@ -23,18 +23,17 @@ async function apiFetch<TResponse>(
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
 
-  // Use JWT token if available, otherwise fallback to demo auth
+  // Require JWT token - no demo auth fallback
   const token = getAuthToken()
-  if (token) {
-    headers.set('Authorization', `Bearer ${token.accessToken}`)
-  } else {
-    // Fallback to demo auth for backward compatibility
-    const identity = getDemoIdentity()
-    if (identity) {
-      headers.set('X-Demo-Email', identity.email)
-      headers.set('X-Demo-Name', identity.name || identity.email.split('@')[0])
-    }
+  if (!token) {
+    throw new ApiError(
+      "Authentication required. Please login or register.",
+      401,
+      { detail: "Authentication required" }
+    )
   }
+
+  headers.set('Authorization', `Bearer ${token.accessToken}`)
 
   let body: BodyInit | undefined = init?.body as BodyInit | undefined
   if (init?.json !== undefined) {
@@ -48,6 +47,13 @@ async function apiFetch<TResponse>(
   const parsed = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null)
 
   if (!res.ok) {
+    // Handle 401 Unauthorized - token expired or invalid
+    if (res.status === 401) {
+      // Clear invalid token
+      clearAuthToken()
+      // Redirect to login will be handled by the component
+    }
+
     const detail =
       typeof parsed === 'object' && parsed !== null && 'detail' in parsed
         ? (parsed as { detail?: unknown }).detail

@@ -41,6 +41,7 @@ export function LoginPage() {
     })
   }
 
+  // If already logged in, redirect to groups
   if (identity) return <Navigate to="/groups" replace />
 
   return (

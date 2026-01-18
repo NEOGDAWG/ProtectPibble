@@ -27,59 +27,53 @@ class CurrentUser:
 def get_current_user(
     db: Session = Depends(get_db),  # noqa: B008 (FastAPI dependency injection)
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    # Fallback to demo auth for backward compatibility
-    x_demo_email: Optional[str] = Header(default=None, alias="X-Demo-Email"),
-    x_demo_name: Optional[str] = Header(default=None, alias="X-Demo-Name"),
 ) -> CurrentUser:
     """
-    Get current user from JWT token or fallback to demo auth.
+    Get current user from JWT token. Authentication is required.
     
-    Priority:
-    1. JWT token (Authorization: Bearer <token>)
-    2. Demo headers (X-Demo-Email, X-Demo-Name) for backward compatibility
+    Users must register/login to get a JWT token.
     """
-    # Try JWT token first
-    if credentials:
-        token = credentials.credentials
-        payload = decode_access_token(token)
-        if payload:
-            user_id = payload.get("sub")
-            if user_id:
-                try:
-                    user_uuid = uuid.UUID(user_id)
-                    user = db.scalar(select(User).where(User.id == user_uuid))
-                    if user:
-                        return CurrentUser(id=user.id, email=user.email, display_name=user.display_name)
-                except ValueError:
-                    pass
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please login or register.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    # Fallback to demo auth for backward compatibility
-    if x_demo_email:
-        email = x_demo_email.strip().lower()
-        if "@" not in email:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid X-Demo-Email")
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token. Please login again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-        name = (x_demo_name or email.split("@")[0]).strip()
-        if not name:
-            name = email.split("@")[0]
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token. Please login again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-        user = db.scalar(select(User).where(User.email == email))
-        if user is None:
-            # For demo auth, create user without password (legacy behavior)
-            user = User(email=email, display_name=name, password_hash=None)
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-        elif user.display_name != name and x_demo_name:
-            user.display_name = name
-            db.commit()
-            db.refresh(user)
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token format. Please login again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-        return CurrentUser(id=user.id, email=user.email, display_name=user.display_name)
+    user = db.scalar(select(User).where(User.id == user_uuid))
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found. Please login again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Not authenticated. Provide Authorization header or X-Demo-Email header.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    return CurrentUser(id=user.id, email=user.email, display_name=user.display_name)
 
