@@ -101,3 +101,25 @@ export type CompleteTaskRequest = {
 export type NudgeRequest = { toUserId: string; taskId?: string; message?: string }
 export type NudgeResponse = { ok: boolean }
 
+// Auth types
+export type RegisterRequest = {
+  email: string
+  displayName: string
+  password: string
+}
+
+export type LoginRequest = {
+  email: string
+  password: string
+}
+
+export type AuthResponse = {
+  accessToken: string
+  tokenType: string
+  user: {
+    id: string
+    email: string
+    displayName: string
+  }
+}
+

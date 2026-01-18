@@ -1,5 +1,5 @@
 import { camelizeKeys, decamelizeKeys } from './case'
-import { getDemoIdentity } from '../auth/storage'
+import { getAuthToken, getDemoIdentity } from '../auth/storage'
 
 function getApiBaseUrl(): string {
   const base = import.meta.env.VITE_API_BASE_URL as string | undefined
@@ -20,13 +20,20 @@ async function apiFetch<TResponse>(
   path: string,
   init?: RequestInit & { json?: unknown },
 ): Promise<TResponse> {
-  const identity = getDemoIdentity()
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
 
-  if (identity) {
-    headers.set('X-Demo-Email', identity.email)
-    headers.set('X-Demo-Name', identity.name)
+  // Use JWT token if available, otherwise fallback to demo auth
+  const token = getAuthToken()
+  if (token) {
+    headers.set('Authorization', `Bearer ${token.accessToken}`)
+  } else {
+    // Fallback to demo auth for backward compatibility
+    const identity = getDemoIdentity()
+    if (identity) {
+      headers.set('X-Demo-Email', identity.email)
+      headers.set('X-Demo-Name', identity.name || identity.email.split('@')[0])
+    }
   }
 
   let body: BodyInit | undefined = init?.body as BodyInit | undefined
@@ -53,8 +60,13 @@ async function apiFetch<TResponse>(
 }
 
 export const api = {
-  // Auth is handled via headers in apiFetch
+  // Auth endpoints
+  register: (req: import('./types').RegisterRequest) =>
+    apiFetch<import('./types').AuthResponse>('/auth/register', { method: 'POST', json: req }),
+  login: (req: import('./types').LoginRequest) =>
+    apiFetch<import('./types').AuthResponse>('/auth/login', { method: 'POST', json: req }),
 
+  // Groups
   getMyGroups: () => apiFetch<import('./types').MyGroupsResponse>('/groups/my'),
   createGroup: (req: import('./types').CreateGroupRequest) =>
     apiFetch<import('./types').CreateGroupResponse>('/groups', { method: 'POST', json: req }),
@@ -64,6 +76,7 @@ export const api = {
   getGroupState: (groupId: string) =>
     apiFetch<import('./types').GroupStateResponse>(`/groups/${groupId}/state`),
 
+  // Tasks
   createTask: (groupId: string, req: import('./types').CreateTaskRequest) =>
     apiFetch<import('./types').TaskState>(`/groups/${groupId}/tasks`, { method: 'POST', json: req }),
   updateTask: (taskId: string, req: import('./types').UpdateTaskRequest) =>
@@ -72,6 +85,7 @@ export const api = {
   completeTask: (taskId: string, req: import('./types').CompleteTaskRequest) =>
     apiFetch<{ ok: boolean }>(`/tasks/${taskId}/complete`, { method: 'POST', json: req }),
 
+  // Nudges
   sendNudge: (groupId: string, req: import('./types').NudgeRequest) =>
     apiFetch<import('./types').NudgeResponse>(`/groups/${groupId}/nudges`, { method: 'POST', json: req }),
 }

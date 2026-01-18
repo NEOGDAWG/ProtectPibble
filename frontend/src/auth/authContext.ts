@@ -1,10 +1,14 @@
 import { createContext } from 'react'
 
-export type AuthIdentity = { email: string; name: string }
+export type AuthIdentity = {
+  id: string
+  email: string
+  displayName: string
+}
 
 export type AuthContextValue = {
   identity: AuthIdentity | null
-  login: (identity: AuthIdentity) => void
+  login: (token: { accessToken: string; user: AuthIdentity }) => void
   logout: () => void
 }
 

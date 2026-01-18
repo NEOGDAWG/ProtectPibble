@@ -19,7 +19,12 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://protectpibble:protectpibble@127.0.0.1:5432/protectpibble"
     redis_url: str = "redis://127.0.0.1:6379/0"
 
-    # Auth (Clerk recommended)
+    # Auth (JWT)
+    jwt_secret_key: str = ""  # Set via JWT_SECRET_KEY env var in production
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 24 * 7  # 7 days
+
+    # Auth (Clerk recommended - optional)
     clerk_issuer: str = ""
     clerk_jwks_url: str = ""
 

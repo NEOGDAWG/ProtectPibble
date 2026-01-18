@@ -63,7 +63,7 @@ export function GroupsPage() {
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-semibold tracking-tight">Groups</h1>
             <p className="text-slate-300">
-              Signed in as <span className="text-slate-100">{identity.name}</span> (
+              Signed in as <span className="text-slate-100">{identity.displayName}</span> (
               <span className="font-mono text-slate-200">{identity.email}</span>)
             </p>
           </div>
