@@ -25,7 +25,10 @@ export function RegisterPage() {
       navigate('/groups')
     },
     onError: (error: Error) => {
-      setErrors({ submit: error.message })
+      // Show more detailed error message
+      const message = error.message || 'Failed to register. Please try again.'
+      setErrors({ submit: message })
+      console.error('Registration error:', error)
     },
   })
 

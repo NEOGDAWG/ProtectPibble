@@ -45,28 +45,53 @@ async function apiFetch<TResponse>(
     body = JSON.stringify(decamelizeKeys(init.json))
   }
 
-  const res = await fetch(`${getApiBaseUrl()}${path}`, { ...init, headers, body })
-  const contentType = res.headers.get('content-type') || ''
-  const isJson = contentType.includes('application/json')
-  const parsed = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null)
+  const apiUrl = `${getApiBaseUrl()}${path}`
+  
+  try {
+    const res = await fetch(apiUrl, { ...init, headers, body })
+    const contentType = res.headers.get('content-type') || ''
+    const isJson = contentType.includes('application/json')
+    const parsed = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null)
 
-  if (!res.ok) {
-    // Handle 401 Unauthorized - token expired or invalid
-    if (res.status === 401 && !isAuthEndpoint) {
-      // Clear invalid token (but not for login/register endpoints)
-      clearAuthToken()
-      // Redirect to login will be handled by the component
+    if (!res.ok) {
+      // Handle 401 Unauthorized - token expired or invalid
+      if (res.status === 401 && !isAuthEndpoint) {
+        // Clear invalid token (but not for login/register endpoints)
+        clearAuthToken()
+        // Redirect to login will be handled by the component
+      }
+
+      const detail =
+        typeof parsed === 'object' && parsed !== null && 'detail' in parsed
+          ? (parsed as { detail?: unknown }).detail
+          : undefined
+      const msg = detail ? String(detail) : `Request failed (${res.status})`
+      throw new ApiError(msg, res.status, parsed)
     }
 
-    const detail =
-      typeof parsed === 'object' && parsed !== null && 'detail' in parsed
-        ? (parsed as { detail?: unknown }).detail
-        : undefined
-    const msg = detail ? String(detail) : `Request failed (${res.status})`
-    throw new ApiError(msg, res.status, parsed)
+    return camelizeKeys(parsed) as TResponse
+  } catch (error) {
+    // Handle network errors, CORS errors, etc.
+    if (error instanceof ApiError) {
+      throw error
+    }
+    
+    // Check if it's a CORS error
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    if (errorMessage.includes('CORS') || errorMessage.includes('Failed to fetch')) {
+      throw new ApiError(
+        `Network error: Unable to connect to backend. Please check that ${apiUrl} is accessible and CORS is configured correctly.`,
+        0,
+        { detail: errorMessage }
+      )
+    }
+    
+    throw new ApiError(
+      `Network error: ${errorMessage}`,
+      0,
+      { detail: errorMessage }
+    )
   }
-
-  return camelizeKeys(parsed) as TResponse
 }
 
 export const api = {
