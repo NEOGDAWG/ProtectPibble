@@ -18,8 +18,7 @@ type SortBy = 'DUE_DATE' | 'PENALTY' | 'TITLE'
 function formatLocalDateTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  // Display the time exactly as stored (no timezone conversion)
-  // The time is stored as UTC but represents the exact time the user entered
+  // Display exactly as stored - no conversion, just read UTC values directly
   const year = d.getUTCFullYear()
   const month = d.toLocaleString('en-US', { month: 'short' })
   const day = String(d.getUTCDate()).padStart(2, '0')
@@ -150,17 +149,9 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // The datetime-local input gives us a time without timezone (e.g., "2026-01-18T07:18")
-      // User wants this stored and displayed exactly as entered (7:20 AM = 7:20 AM, no conversion)
-      // For the backend deadline logic to work, we need to store it in UTC, but we'll store it
-      // in a way that represents the exact time the user entered when converted back.
-      //
-      // Since the user is in PST and wants no conversion, we'll store the time as UTC
-      // by treating the input as if it were already in UTC (no offset applied).
-      // This way, when we display it, we can show it exactly as entered.
-      
-      // Store the time directly as UTC (treating input as naive UTC time)
-      // This means 7:20 AM input = 7:20 AM UTC stored = 7:20 AM displayed
+      // User is in PST and wants NO conversion - store and display exactly as entered
+      // Input: 7:20 AM PST -> Store as 7:20 AM UTC (no offset) -> Display as 7:20 AM PST
+      // Treat the input time as if it's already in UTC (naive time)
       const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
       
       return api.createTask(groupId, {
