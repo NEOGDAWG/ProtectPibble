@@ -21,6 +21,8 @@ class GroupSummary(ApiModel):
     invite_code: str
     role: GroupRole
     class_: ClassRef = Field(alias="class")
+    pet_health: Optional[int] = None
+    pet_max_health: Optional[int] = None
 
 
 class CreateGroupRequest(ApiModel):

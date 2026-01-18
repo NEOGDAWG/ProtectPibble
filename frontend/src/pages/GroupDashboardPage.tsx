@@ -406,9 +406,9 @@ export function GroupDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-full bg-blue-50 px-6 py-10">
+      <div className="min-h-full px-6 py-10" style={{ backgroundColor: '#cae0ee' }}>
         <div className="mx-auto max-w-6xl">
-          <div className="text-blue-700">Loading dashboard…</div>
+          <div className="font-normal" style={{ color: '#5e9bd4' }}>Loading dashboard…</div>
         </div>
       </div>
     )
@@ -416,12 +416,12 @@ export function GroupDashboardPage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-full bg-blue-50 px-6 py-10">
+      <div className="min-h-full px-6 py-10" style={{ backgroundColor: '#cae0ee' }}>
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-2xl border border-red-200 bg-white p-5 shadow-sm">
-            <p className="text-red-600">{(error as Error)?.message || 'Failed to load group.'}</p>
+          <div className="rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+            <p className="font-normal" style={{ color: '#ef8688' }}>{(error as Error)?.message || 'Failed to load group.'}</p>
             <div className="mt-3">
-              <Link className="text-blue-600 underline" to="/groups">
+              <Link className="underline font-normal" style={{ color: '#5e9bd4' }} to="/groups">
                 Back to groups
               </Link>
             </div>
@@ -435,61 +435,63 @@ export function GroupDashboardPage() {
     data.group.mode === 'FRIEND' || (data.viewer?.role ? data.viewer.role === 'instructor' : false)
 
   const healthPercent = Math.max(0, Math.min(100, (data.pet.health / data.pet.maxHealth) * 100))
-  const healthColor =
-    healthPercent >= 70 ? 'bg-green-500' : healthPercent >= 40 ? 'bg-yellow-500' : 'bg-red-500'
   const petImageSrc = getPetImage(data.pet.health, data.pet.maxHealth)
 
   return (
-    <div className="min-h-full bg-blue-50 px-6 py-8">
+    <div className="min-h-full px-6 py-8" style={{ backgroundColor: '#cae0ee' }}>
       <div className="mx-auto max-w-6xl">
+        {/* Centered ProtectPibble Title */}
+        <div className="mb-8 text-center">
+          <h1 className="text-5xl font-normal" style={{ color: '#314479' }}>ProtectPibble</h1>
+        </div>
+
         {/* Header with group name and back button */}
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-900">{data.group.name}</h1>
-            <p className="mt-1 text-blue-700">
+            <h2 className="text-3xl font-normal" style={{ color: '#314479' }}>{data.group.name}</h2>
+            <p className="mt-1 text-lg font-normal" style={{ color: '#5e9bd4' }}>
               {data.group.class.code} • {data.group.class.term}
             </p>
           </div>
           <Link
-            className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-blue-900 shadow-sm hover:bg-gray-50"
+            className="rounded-xl bg-[#f2f7fa] px-4 py-2 text-sm font-normal transition-opacity hover:opacity-90"
+            style={{ color: '#5e9bd4' }}
             to="/groups"
           >
             Back
           </Link>
         </div>
 
+        {/* Floating Pet Section */}
+        <div className="mb-6 flex flex-col items-center">
+          <img
+            src={petImageSrc}
+            alt={data.pet.name}
+            className="mb-4 h-64 w-64 object-contain"
+          />
+          <div className="w-full max-w-md">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-normal" style={{ color: '#314479' }}>Health</span>
+              <span className="text-sm font-normal" style={{ color: '#314479' }}>HP {data.pet.health}</span>
+            </div>
+            <div className="h-6 w-full overflow-hidden rounded-full" style={{ backgroundColor: '#f2f7fa' }}>
+              <div
+                className="h-full transition-all"
+                style={{ width: `${healthPercent}%`, backgroundColor: '#07d273' }}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Main content grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Left column - Pet and Health */}
+          {/* Left column - Tasks */}
           <div className="lg:col-span-2">
-            {/* Pet Section */}
-            <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col items-center">
-                <h2 className="mb-4 text-2xl font-bold text-blue-900">ProtectPibble</h2>
-                <img
-                  src={petImageSrc}
-                  alt={data.pet.name}
-                  className="mb-4 h-48 w-48 object-contain"
-                />
-                <div className="w-full">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-blue-900">Health</span>
-                    <span className="text-sm font-bold text-blue-900">HP {data.pet.health}</span>
-                  </div>
-                  <div className="h-6 w-full overflow-hidden rounded-full bg-gray-200">
-                    <div
-                      className={`h-full transition-all ${healthColor}`}
-                      style={{ width: `${healthPercent}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Tasks Section */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#f2f7fa' }}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-blue-900">Tasks</h2>
+                <h2 className="text-xl font-normal" style={{ color: '#314479' }}>Tasks</h2>
                 <div className="flex gap-2">
                   <Button onClick={() => setFiltersOpen((v) => !v)}>
                     {filtersOpen ? 'Hide Filters' : 'Filter'}
@@ -503,7 +505,7 @@ export function GroupDashboardPage() {
               </div>
 
               {filtersOpen && (
-                <div className="mb-4 grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="mb-4 grid gap-4 rounded-xl p-4" style={{ backgroundColor: '#cae0ee' }}>
                   <div className="grid gap-4 md:grid-cols-2">
                     <Input
                       label="Search"
@@ -512,9 +514,10 @@ export function GroupDashboardPage() {
                       placeholder="Search tasks..."
                     />
                     <label className="flex flex-col gap-1 text-sm">
-                      <span className="text-blue-900 font-medium">Due date</span>
+                      <span className="font-normal" style={{ color: '#314479' }}>Due date</span>
                       <select
-                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
+                        style={{ color: '#5e9bd4' }}
                         value={dueFilter}
                         onChange={(e) => setDueFilter(e.target.value as DueFilter)}
                       >
@@ -529,9 +532,10 @@ export function GroupDashboardPage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="flex flex-col gap-1 text-sm">
-                      <span className="text-blue-900 font-medium">Status</span>
+                      <span className="font-normal" style={{ color: '#314479' }}>Status</span>
                       <select
-                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
+                        style={{ color: '#5e9bd4' }}
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                       >
@@ -541,9 +545,10 @@ export function GroupDashboardPage() {
                       </select>
                     </label>
                     <label className="flex flex-col gap-1 text-sm">
-                      <span className="text-blue-900 font-medium">Sort by</span>
+                      <span className="font-normal" style={{ color: '#314479' }}>Sort by</span>
                       <select
-                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
+                        style={{ color: '#5e9bd4' }}
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortBy)}
                       >
@@ -555,18 +560,20 @@ export function GroupDashboardPage() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <div className="text-sm font-medium text-blue-900">Types</div>
+                    <div className="text-sm font-normal" style={{ color: '#314479' }}>Types</div>
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
                       {(Object.keys(typeFilters) as TaskType[]).map((tt) => (
                         <label
                           key={tt}
-                          className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-blue-900"
+                          className="flex items-center gap-2 rounded-xl bg-[#f2f7fa] px-3 py-2 text-sm font-normal"
+                          style={{ color: '#5e9bd4' }}
                         >
                           <input
                             type="checkbox"
                             checked={typeFilters[tt]}
                             onChange={(e) => setTypeFilters((p) => ({ ...p, [tt]: e.target.checked }))}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                            className="rounded"
+                            style={{ accentColor: '#5b9cd4' }}
                           />
                           <span>{tt}</span>
                         </label>
@@ -582,7 +589,8 @@ export function GroupDashboardPage() {
 
               {showCreate ? (
                 <form
-                  className="mb-4 grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
+                  className="mb-4 grid gap-4 rounded-xl p-4"
+                  style={{ backgroundColor: '#cae0ee' }}
                   onSubmit={(e) => {
                     e.preventDefault()
                     createTaskMutation.mutate()
@@ -590,9 +598,10 @@ export function GroupDashboardPage() {
                 >
                   <Input label="Title" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} required />
                   <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-blue-900 font-medium">Type</span>
+                    <span className="font-normal" style={{ color: '#314479' }}>Type</span>
                     <select
-                      className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
+                      style={{ color: '#5e9bd4' }}
                       value={taskType}
                       onChange={(e) => setTaskType(e.target.value as TaskType)}
                     >
@@ -619,7 +628,7 @@ export function GroupDashboardPage() {
                     required
                   />
                   {createTaskMutation.error ? (
-                    <p className="text-sm text-red-600">{(createTaskMutation.error as Error).message}</p>
+                    <p className="text-sm" style={{ color: '#ef8688' }}>{(createTaskMutation.error as Error).message}</p>
                   ) : null}
                   <div className="flex justify-end">
                     <Button type="submit" variant="primary" disabled={createTaskMutation.isPending || !taskTitle.trim()}>
@@ -631,7 +640,7 @@ export function GroupDashboardPage() {
 
               <div className="grid gap-3">
                 {filteredAndSortedTasks.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-blue-700">
+                  <div className="rounded-xl p-4 text-center font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>
                     {data.tasks.length === 0
                       ? `No tasks yet${canCreateTasks ? ' — create the first one.' : '.'}`
                       : 'No tasks match your filters.'}
@@ -644,26 +653,26 @@ export function GroupDashboardPage() {
                     const needsGrade = (t.type === 'EXAM' || t.type === 'ASSIGNMENT') && t.myStatus !== 'DONE'
 
                     return (
-                      <div key={t.id} className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                      <div key={t.id} className="flex flex-col gap-2 rounded-xl p-4" style={{ backgroundColor: '#f2f7fa' }}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium text-blue-900">{t.title}</span>
-                              <span className="rounded-full border border-gray-300 bg-gray-100 px-2 py-0.5 text-xs text-blue-700">
+                              <span className="font-normal" style={{ color: '#5e9bd4' }}>{t.title}</span>
+                              <span className="rounded-full px-2 py-0.5 text-xs font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>
                                 {formatEnumValue(t.type)}
                               </span>
-                              <span className="rounded-full border border-gray-300 bg-gray-100 px-2 py-0.5 text-xs text-blue-700">
+                              <span className="rounded-full px-2 py-0.5 text-xs font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>
                                 {formatEnumValue(t.myStatus)}
                               </span>
                               {t.myGradeLetter && (
-                                <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                                <span className="rounded-full px-2 py-0.5 text-xs font-normal" style={{ backgroundColor: '#cae0ee', color: '#07d273' }}>
                                   Grade: {t.myGradeLetter}
                                   {t.myGradePercent ? ` (${t.myGradePercent}%)` : ''}
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1 text-sm text-blue-700">
-                              <span className={isOverdue ? 'font-medium text-red-600' : ''}>
+                            <div className="mt-1 text-sm font-normal" style={{ color: '#5e9bd4' }}>
+                              <span className={isOverdue ? 'font-normal' : ''} style={{ color: isOverdue ? '#ef8688' : '#5e9bd4' }}>
                                 Due {formatLocalDateTime(t.dueAt)}
                               </span>
                               {' • '}
@@ -701,26 +710,26 @@ export function GroupDashboardPage() {
                           </div>
                         </div>
                         {gradeTaskId === t.id && (
-                          <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                            <div className="mb-3 text-sm font-medium text-blue-900">Enter your grade:</div>
+                          <div className="mt-2 rounded-xl p-4" style={{ backgroundColor: '#cae0ee' }}>
+                            <div className="mb-3 text-sm font-normal" style={{ color: '#314479' }}>Enter your grade:</div>
                             <div className="flex flex-wrap items-end gap-3">
-                              <label className="flex items-center gap-2 text-sm text-blue-900">
+                              <label className="flex items-center gap-2 text-sm font-normal" style={{ color: '#314479' }}>
                                 <input
                                   type="radio"
                                   name={`gradeMode-${t.id}`}
                                   checked={gradeMode === 'percent'}
                                   onChange={() => setGradeMode('percent')}
-                                  className="text-blue-600 focus:ring-blue-400"
+                                  style={{ accentColor: '#5b9cd4' }}
                                 />
                                 <span>Percent</span>
                               </label>
-                              <label className="flex items-center gap-2 text-sm text-blue-900">
+                              <label className="flex items-center gap-2 text-sm font-normal" style={{ color: '#314479' }}>
                                 <input
                                   type="radio"
                                   name={`gradeMode-${t.id}`}
                                   checked={gradeMode === 'letter'}
                                   onChange={() => setGradeMode('letter')}
-                                  className="text-blue-600 focus:ring-blue-400"
+                                  style={{ accentColor: '#5b9cd4' }}
                                 />
                                 <span>Letter</span>
                               </label>
@@ -737,9 +746,10 @@ export function GroupDashboardPage() {
                                 />
                               ) : (
                                 <label className="flex flex-col gap-1 text-sm">
-                                  <span className="text-blue-900 font-medium">Letter</span>
+                                  <span className="font-normal" style={{ color: '#314479' }}>Letter</span>
                                   <select
-                                    className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
+                                    style={{ color: '#5e9bd4' }}
                                     value={gradeLetter}
                                     onChange={(e) =>
                                       setGradeLetter(
@@ -790,7 +800,7 @@ export function GroupDashboardPage() {
                               </div>
                             </div>
                             {completeMutation.error ? (
-                              <p className="mt-2 text-sm text-red-600">{(completeMutation.error as Error).message}</p>
+                              <p className="mt-2 text-sm font-normal" style={{ color: '#ef8688' }}>{(completeMutation.error as Error).message}</p>
                             ) : null}
                           </div>
                         )}
@@ -807,18 +817,19 @@ export function GroupDashboardPage() {
 
             {/* Leaderboard */}
             {data.group.mode === 'FRIEND' && data.leaderboard?.length ? (
-              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <h2 className="mb-3 text-xl font-bold text-blue-900">Leaderboard</h2>
+              <div className="rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+                <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Leaderboard</h2>
                 <div className="grid gap-2">
                   {data.leaderboard.map((row, idx) => (
                     <div
                       key={row.user.id}
-                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+                      className="flex items-center justify-between rounded-xl px-4 py-3"
+                      style={{ backgroundColor: '#cae0ee' }}
                     >
-                      <div className="font-medium text-blue-900">
+                      <div className="font-normal" style={{ color: '#5e9bd4' }}>
                         {idx + 1}. {row.user.displayName}
                       </div>
-                      <div className="text-sm text-blue-700">
+                      <div className="text-sm font-normal" style={{ color: '#5e9bd4' }}>
                         Done {row.doneCount} Missed {row.missedCount}
                       </div>
                     </div>
@@ -828,11 +839,11 @@ export function GroupDashboardPage() {
             ) : null}
 
             {/* Activity Log */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-3 text-xl font-bold text-blue-900">Activity Log</h2>
+            <div className="rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+              <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Activity Log</h2>
               <div className="grid gap-2">
                 {data.recentEvents.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-blue-700">
+                  <div className="rounded-xl p-4 text-center font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>
                     Activity will appear here.
                   </div>
                 ) : (
@@ -864,20 +875,20 @@ export function GroupDashboardPage() {
                     }
                     
                     return (
-                      <div key={idx} className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                        <div className="text-sm text-blue-900">
+                      <div key={idx} className="rounded-xl px-4 py-3" style={{ backgroundColor: '#cae0ee' }}>
+                        <div className="text-sm font-normal" style={{ color: '#5e9bd4' }}>
                           {data.group.mode === 'FRIEND' ? (
                             <>
-                              <span className="font-medium">{actorDisplay}</span> {eventText}
+                              <span className="font-normal">{actorDisplay}</span> {eventText}
                               {typeof e.delta === 'number' && e.delta !== 0 ? (
-                                <span className={e.delta >= 0 ? 'ml-2 font-medium text-green-600' : 'ml-2 font-medium text-red-600'}>
+                                <span className="ml-2 font-normal" style={{ color: e.delta >= 0 ? '#07d273' : '#ef8688' }}>
                                   {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
                                 </span>
                               ) : null}
                               {e.target?.displayName ? (
                                 <>
                                   {' '}
-                                  → <span className="font-medium">{e.target.displayName}</span>
+                                  → <span className="font-normal">{e.target.displayName}</span>
                                 </>
                               ) : null}
                             </>
@@ -885,14 +896,14 @@ export function GroupDashboardPage() {
                             <>
                               {e.message || eventText}
                               {typeof e.delta === 'number' && e.delta !== 0 ? (
-                                <span className={e.delta >= 0 ? 'ml-2 text-green-600' : 'ml-2 text-red-600'}>
+                                <span className="ml-2 font-normal" style={{ color: e.delta >= 0 ? '#07d273' : '#ef8688' }}>
                                   {e.delta >= 0 ? `+${e.delta}` : `${e.delta}`} HP
                                 </span>
                               ) : null}
                             </>
                           )}
                         </div>
-                        <div className="mt-1 text-xs text-blue-600">{formatLocalDateTime(e.createdAt)}</div>
+                        <div className="mt-1 text-xs font-normal" style={{ color: '#5e9bd4' }}>{formatLocalDateTime(e.createdAt)}</div>
                       </div>
                     )
                   })

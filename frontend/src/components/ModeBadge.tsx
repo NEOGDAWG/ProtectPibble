@@ -4,10 +4,10 @@ export function ModeBadge({ mode }: { mode: GroupMode }) {
   const label = mode === 'INSTRUCTOR' ? 'Instructor' : 'Friend'
   const cls =
     mode === 'INSTRUCTOR'
-      ? 'border-purple-300 bg-purple-100 text-purple-700'
-      : 'border-green-300 bg-green-100 text-green-700'
+      ? 'bg-[#f2f7fa] text-[#5e9bd4]'
+      : 'bg-[#f2f7fa] text-[#5e9bd4]'
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-normal ${cls}`}>
       {label}
     </span>
   )

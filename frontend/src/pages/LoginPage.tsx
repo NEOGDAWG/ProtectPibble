@@ -45,11 +45,11 @@ export function LoginPage() {
   if (identity) return <Navigate to="/groups" replace />
 
   return (
-    <div className="min-h-full bg-blue-50 px-6 py-10">
+    <div className="min-h-full px-6 py-10" style={{ backgroundColor: '#cae0ee' }}>
       <div className="mx-auto max-w-lg">
         <header className="mb-6 flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-blue-900">Welcome to ProtectPibble</h1>
-          <p className="text-blue-700">Sign in to your account or create a new one</p>
+          <h1 className="text-3xl font-normal" style={{ color: '#314479' }}>Welcome to ProtectPibble</h1>
+          <p className="text-lg font-normal" style={{ color: '#5e9bd4' }}>Sign in to your account or create a new one</p>
         </header>
 
         <div className="mb-6 flex gap-3">
@@ -67,14 +67,14 @@ export function LoginPage() {
 
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full" style={{ borderTop: '1px solid #5e9bd4' }}></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-blue-50 px-2 text-blue-600">Or sign in with email</span>
+            <span className="px-2 font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>Or sign in with email</span>
           </div>
         </div>
 
-        <form className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm" onSubmit={handleSubmit}>
+        <form className="rounded-2xl p-6" style={{ backgroundColor: '#f2f7fa' }} onSubmit={handleSubmit}>
           <div className="grid gap-4">
             <Input
               label="Email"
@@ -103,15 +103,15 @@ export function LoginPage() {
             />
 
             {error && (
-              <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-xl px-4 py-3 text-sm font-normal" style={{ backgroundColor: '#ef8688', color: 'white' }}>
                 {error}
               </div>
             )}
 
             <div className="flex items-center justify-between">
-              <p className="text-sm text-blue-700">
+              <p className="text-sm font-normal" style={{ color: '#5e9bd4' }}>
                 Don't have an account?{' '}
-                <Link to="/register" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                <Link to="/register" className="underline font-normal" style={{ color: '#5e9bd4' }}>
                   Register here
                 </Link>
               </p>

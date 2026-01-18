@@ -9,8 +9,13 @@ body,
 }
 
 body {
-  @apply bg-blue-50 text-blue-900;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background-color: #cae0ee;
+  color: #5e9bd4;
+  font-family: 'Fredoka One', cursive;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  font-family: 'Fredoka One', cursive;
 }

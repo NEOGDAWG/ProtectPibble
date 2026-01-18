@@ -9,6 +9,7 @@ import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { ModeBadge } from '../components/ModeBadge'
 import { queryClient } from '../queryClient'
+import { getPetImage } from '../utils/petImage'
 
 export function GroupsPage() {
   const { identity, logout } = useAuth()
@@ -72,14 +73,14 @@ export function GroupsPage() {
   if (!identity) return <Navigate to="/login" replace />
 
   return (
-    <div className="min-h-full bg-blue-50 px-6 py-8">
+    <div className="min-h-full px-6 py-8" style={{ backgroundColor: '#cae0ee' }}>
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-900">Groups</h1>
-            <p className="mt-1 text-blue-700">
-              Signed in as <span className="font-medium">{identity.displayName}</span> (
+            <h1 className="text-3xl font-normal" style={{ color: '#314479' }}>Groups</h1>
+            <p className="mt-1 text-lg font-normal" style={{ color: '#5e9bd4' }}>
+              Signed in as <span className="font-normal">{identity.displayName}</span> (
               <span className="font-mono">{identity.email}</span>)
             </p>
           </div>
@@ -94,37 +95,67 @@ export function GroupsPage() {
         </div>
 
         {/* My Groups Section */}
-        <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-xl font-bold text-blue-900">My groups</h2>
-          {isLoading && <p className="text-blue-700">Loading…</p>}
+        <div className="mb-6 rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+          <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>My groups</h2>
+          {isLoading && <p className="font-normal" style={{ color: '#5e9bd4' }}>Loading…</p>}
           {error && (
-            <p className="text-red-600">
+            <p className="font-normal" style={{ color: '#ef8688' }}>
               {(error as Error).message}
             </p>
           )}
           {!isLoading && !error && (
             <div className="grid gap-2">
               {data?.groups?.length ? (
-                data.groups.map((g) => (
-                  <Link
-                    key={g.id}
-                    to={`/groups/${g.id}`}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition hover:bg-gray-100"
-                  >
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-blue-900">{g.name}</span>
-                        <ModeBadge mode={g.mode} />
+                data.groups.map((g) => {
+                  const petHealth = g.petHealth ?? 100
+                  const petMaxHealth = g.petMaxHealth ?? 100
+                  const healthPercent = Math.max(0, Math.min(100, (petHealth / petMaxHealth) * 100))
+                  const petImageSrc = getPetImage(petHealth, petMaxHealth)
+                  
+                  return (
+                    <Link
+                      key={g.id}
+                      to={`/groups/${g.id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: '#cae0ee' }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-normal" style={{ color: '#314479' }}>{g.name}</span>
+                            <ModeBadge mode={g.mode} />
+                          </div>
+                          <div className="text-sm font-normal" style={{ color: '#5e9bd4' }}>
+                            {g.class.code} • {g.class.term}
+                          </div>
+                        </div>
+                        {/* Pet Preview */}
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={petImageSrc}
+                            alt="Pet preview"
+                            className="h-16 w-16 object-contain"
+                          />
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between gap-2 text-xs font-normal" style={{ color: '#314479' }}>
+                              <span>Health</span>
+                              <span>HP {petHealth}</span>
+                            </div>
+                            <div className="h-3 w-32 overflow-hidden rounded-full" style={{ backgroundColor: '#f2f7fa' }}>
+                              <div
+                                className="h-full transition-all"
+                                style={{ width: `${healthPercent}%`, backgroundColor: '#07d273' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-blue-700">
-                        {g.class.code} • {g.class.term}
-                      </div>
-                    </div>
-                    <div className="text-sm text-blue-600">Invite: {g.inviteCode}</div>
-                  </Link>
-                ))
+                      <div className="text-sm font-normal" style={{ color: '#5e9bd4' }}>Invite: {g.inviteCode}</div>
+                    </Link>
+                  )
+                })
               ) : (
-                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-blue-700">
+                <div className="rounded-xl p-4 text-center font-normal" style={{ backgroundColor: '#cae0ee', color: '#5e9bd4' }}>
                   No groups yet. Create one below or join using an invite code.
                 </div>
               )}
@@ -134,8 +165,8 @@ export function GroupsPage() {
 
         {/* Create and Join Forms */}
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-xl font-bold text-blue-900">Create group</h2>
+          <div className="rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+            <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Create group</h2>
             <form
               className="grid gap-4"
               onSubmit={(e) => {
@@ -158,9 +189,10 @@ export function GroupsPage() {
                 required
               />
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-blue-900 font-medium">Mode</span>
+                <span className="font-normal" style={{ color: '#314479' }}>Mode</span>
                 <select
-                  className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="rounded-xl bg-[#f2f7fa] px-3 py-2 font-normal focus:outline-none focus:ring-2"
+                  style={{ color: '#5e9bd4' }}
                   value={createForm.mode}
                   onChange={(e) => setCreateForm((p) => ({ ...p, mode: e.target.value as GroupMode }))}
                 >
@@ -185,7 +217,7 @@ export function GroupsPage() {
                 required
               />
               {createMutation.error && (
-                <p className="text-sm text-red-600">{(createMutation.error as Error).message}</p>
+                <p className="text-sm font-normal" style={{ color: '#ef8688' }}>{(createMutation.error as Error).message}</p>
               )}
               <div className="flex items-center justify-end">
                 <Button type="submit" variant="primary" disabled={!canCreate || createMutation.isPending}>
@@ -195,8 +227,8 @@ export function GroupsPage() {
             </form>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-xl font-bold text-blue-900">Join group</h2>
+          <div className="rounded-2xl p-5" style={{ backgroundColor: '#f2f7fa' }}>
+            <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>Join group</h2>
             <form
               className="grid gap-4"
               onSubmit={(e) => {
@@ -212,7 +244,7 @@ export function GroupsPage() {
                 required
               />
               {joinMutation.error && (
-                <p className="text-sm text-red-600">{(joinMutation.error as Error).message}</p>
+                <p className="text-sm font-normal" style={{ color: '#ef8688' }}>{(joinMutation.error as Error).message}</p>
               )}
               <div className="flex items-center justify-end">
                 <Button type="submit" variant="primary" disabled={!inviteCode.trim() || joinMutation.isPending}>

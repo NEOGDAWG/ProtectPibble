@@ -30,7 +30,12 @@ from app.utils.invite_codes import generate_invite_code
 router = APIRouter(prefix="/groups")
 
 
-def _serialize_group_summary(group: Group, role: GroupRole, klass: Class) -> GroupSummary:
+def _serialize_group_summary(group: Group, role: GroupRole, klass: Class, db: Session) -> GroupSummary:
+    # Get pet health for preview
+    pet = db.scalar(select(Pet).where(Pet.group_id == group.id))
+    pet_health = pet.health if pet else None
+    pet_max_health = pet.max_health if pet else None
+    
     return GroupSummary(
         id=str(group.id),
         name=group.name,
@@ -38,6 +43,8 @@ def _serialize_group_summary(group: Group, role: GroupRole, klass: Class) -> Gro
         invite_code=group.invite_code,
         role=role,
         class_={"code": klass.code, "term": klass.term, "school": klass.school},
+        pet_health=pet_health,
+        pet_max_health=pet_max_health,
     )
 
 
@@ -91,7 +98,7 @@ def create_group(
 
     db.commit()
 
-    return CreateGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass))
+    return CreateGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass, db=db))
 
 
 @router.post("/join", response_model=JoinGroupResponse)
@@ -124,7 +131,7 @@ def join_group(
     klass = db.scalar(select(Class).where(Class.id == group.class_id))
     assert klass is not None
 
-    return JoinGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass))
+    return JoinGroupResponse(group=_serialize_group_summary(group, role=role, klass=klass, db=db))
 
 
 @router.get("/my", response_model=MyGroupsResponse)
@@ -141,7 +148,7 @@ def my_groups(
     ).all()
 
     groups = [
-        _serialize_group_summary(group=g, role=m.role, klass=c)
+        _serialize_group_summary(group=g, role=m.role, klass=c, db=db)
         for (g, m, c) in rows
     ]
     return MyGroupsResponse(groups=groups)

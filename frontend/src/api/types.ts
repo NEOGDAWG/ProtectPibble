@@ -22,6 +22,8 @@ export type GroupSummary = {
   inviteCode: string
   role: GroupRole
   class: ClassRef
+  petHealth?: number | null
+  petMaxHealth?: number | null
 }
 
 export type MyGroupsResponse = { groups: GroupSummary[] }
