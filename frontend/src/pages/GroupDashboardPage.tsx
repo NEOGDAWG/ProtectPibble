@@ -149,9 +149,6 @@ export function GroupDashboardPage() {
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // Create a date string representing the PST time we want
-      const pstDateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
-      
       // We need to find a UTC date that, when converted to PST, gives us the desired time
       // Strategy: try different UTC times and check what PST time they represent
       // Start with assuming PST = UTC-8 (PST) or UTC-7 (PDT)
