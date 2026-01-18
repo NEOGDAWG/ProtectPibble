@@ -3,7 +3,18 @@ import { clearAuthToken, getAuthToken } from '../auth/storage'
 
 function getApiBaseUrl(): string {
   const base = import.meta.env.VITE_API_BASE_URL as string | undefined
-  return (base || 'http://127.0.0.1:8000').replace(/\/+$/, '')
+  const url = (base || 'http://127.0.0.1:8000').replace(/\/+$/, '')
+  
+  // Log in development to help debug
+  if (import.meta.env.DEV) {
+    console.log('[API] Using backend URL:', url)
+    if (!base) {
+      console.warn('[API] VITE_API_BASE_URL not set! Using default:', url)
+      console.warn('[API] Set VITE_API_BASE_URL in Vercel environment variables')
+    }
+  }
+  
+  return url
 }
 
 export class ApiError extends Error {
