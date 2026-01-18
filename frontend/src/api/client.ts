@@ -53,10 +53,23 @@ async function apiFetch<TResponse>(
   let body: BodyInit | undefined = init?.body as BodyInit | undefined
   if (init?.json !== undefined) {
     headers.set('Content-Type', 'application/json')
-    body = JSON.stringify(decamelizeKeys(init.json))
+    const converted = decamelizeKeys(init.json)
+    body = JSON.stringify(converted)
+    
+    // Debug logging
+    if (import.meta.env.DEV) {
+      console.log('[API] Request body (original):', init.json)
+      console.log('[API] Request body (converted):', converted)
+    }
   }
 
   const apiUrl = `${getApiBaseUrl()}${path}`
+  
+  // Debug logging
+  if (import.meta.env.DEV) {
+    console.log('[API] Making request to:', apiUrl)
+    console.log('[API] Method:', init?.method || 'GET')
+  }
   
   try {
     const res = await fetch(apiUrl, { ...init, headers, body })

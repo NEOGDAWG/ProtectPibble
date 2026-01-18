@@ -20,6 +20,10 @@ def register(
     db: Session = Depends(get_db),
 ) -> AuthResponse:
     """Register a new user with email and password. Authentication required for all other endpoints."""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Register request received: email={body.email}, display_name={body.display_name}")
+    
     # Normalize email
     email = body.email.lower().strip()
     
