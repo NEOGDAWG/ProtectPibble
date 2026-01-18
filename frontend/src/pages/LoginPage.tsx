@@ -47,8 +47,13 @@ export function LoginPage() {
   return (
     <div className="min-h-full px-6 py-10" style={{ backgroundColor: '#cae0ee' }}>
       <div className="mx-auto max-w-lg">
+        {/* Centered ProtectPibble Title */}
+        <div className="mb-8 text-center">
+          <h1 className="text-5xl font-normal" style={{ color: '#314479' }}>ProtectPibble</h1>
+        </div>
+
         <header className="mb-6 flex flex-col gap-2">
-          <h1 className="text-3xl font-normal" style={{ color: '#314479' }}>Welcome to ProtectPibble</h1>
+          <h2 className="text-3xl font-normal" style={{ color: '#314479' }}>Welcome</h2>
           <p className="text-lg font-normal" style={{ color: '#5e9bd4' }}>Sign in to your account or create a new one</p>
         </header>
 

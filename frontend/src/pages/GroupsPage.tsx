@@ -77,48 +77,55 @@ export function GroupsPage() {
   return (
     <div className="min-h-full px-6 py-8" style={{ backgroundColor: '#cae0ee' }}>
       <div className="mx-auto max-w-6xl">
+        {/* Centered ProtectPibble Title */}
+        <div className="mb-8 text-center">
+          <h1 className="text-5xl font-normal" style={{ color: '#314479' }}>ProtectPibble</h1>
+        </div>
+
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-normal" style={{ color: '#314479' }}>Groups</h1>
+            <h2 className="text-3xl font-normal" style={{ color: '#314479' }}>Groups</h2>
             <p className="mt-1 text-lg font-normal" style={{ color: '#5e9bd4' }}>
               Signed in as <span className="font-normal">{identity.displayName}</span> (
               <span className="font-mono">{identity.email}</span>)
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                setShowCreatePanel(!showCreatePanel)
-                setShowJoinPanel(false)
-              }}
-              variant="primary"
-            >
-              {showCreatePanel ? 'Cancel' : 'Create Group'}
-            </Button>
-            <Button
-              onClick={() => {
-                setShowJoinPanel(!showJoinPanel)
-                setShowCreatePanel(false)
-              }}
-              variant="primary"
-            >
-              {showJoinPanel ? 'Cancel' : 'Join Group'}
-            </Button>
-            <Button
-              onClick={() => {
-                logout()
-                navigate('/login')
-              }}
-            >
-              Logout
-            </Button>
-          </div>
+          <Button
+            onClick={() => {
+              logout()
+              navigate('/login')
+            }}
+          >
+            Logout
+          </Button>
         </div>
 
         {/* My Groups Section */}
         <div className="mb-6">
-          <h2 className="mb-3 text-xl font-normal" style={{ color: '#314479' }}>My groups</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-normal" style={{ color: '#314479' }}>My groups</h2>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setShowCreatePanel(!showCreatePanel)
+                  setShowJoinPanel(false)
+                }}
+                variant="primary"
+              >
+                {showCreatePanel ? 'Cancel' : 'Create Group'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowJoinPanel(!showJoinPanel)
+                  setShowCreatePanel(false)
+                }}
+                variant="primary"
+              >
+                {showJoinPanel ? 'Cancel' : 'Join Group'}
+              </Button>
+            </div>
+          </div>
           {isLoading && <p className="font-normal" style={{ color: '#5e9bd4' }}>Loading…</p>}
           {error && (
             <p className="font-normal" style={{ color: '#ef8688' }}>
