@@ -147,6 +147,11 @@ def my_groups(
         .order_by(Group.created_at.desc())
     ).all()
 
+    # Apply deadline penalties for each group to ensure pet health is up-to-date
+    # This ensures the preview matches what you see when clicking into the group
+    for (g, _, _) in rows:
+        apply_deadline_penalties_for_group(db, group_id=str(g.id))
+
     groups = [
         _serialize_group_summary(group=g, role=m.role, klass=c, db=db)
         for (g, m, c) in rows
