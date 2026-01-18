@@ -258,7 +258,7 @@ export function GroupsPage() {
                   const petImageSrc = getPetImage(petHealth, petMaxHealth)
                   
                   return (
-                    <div key={g.id} className="flex flex-col gap-3 rounded-xl px-4 py-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 w-fit" style={{ backgroundColor: '#f2f7fa' }}>
+                    <div key={g.id} className="flex flex-col gap-3 rounded-xl px-4 py-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 w-fit relative" style={{ backgroundColor: '#f2f7fa' }}>
                       <div className="flex items-center gap-2">
                         <Link
                           to={`/groups/${g.id}`}
@@ -288,30 +288,30 @@ export function GroupsPage() {
                         to={`/groups/${g.id}`}
                         className="flex flex-col gap-3 hover:opacity-90"
                       >
-                      <div className="text-sm font-normal" style={{ color: '#5e9bd4' }}>
-                        {g.class.code} • {g.class.term}
-                      </div>
-                      {/* Pet Preview */}
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={petImageSrc}
-                          alt="Pet preview"
-                          className="h-16 w-16 object-contain"
-                        />
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between gap-2 text-xs font-normal" style={{ color: '#314479' }}>
-                            <span>Health</span>
-                            <span>HP {petHealth}</span>
-                          </div>
-                          <div className="h-3 w-32 overflow-hidden rounded-full" style={{ backgroundColor: '#cae0ee' }}>
-                            <div
-                              className="h-full transition-all"
-                              style={{ width: `${healthPercent}%`, backgroundColor: '#07d273' }}
-                            />
+                        <div className="text-sm font-normal" style={{ color: '#5e9bd4' }}>
+                          {g.class.code} • {g.class.term}
+                        </div>
+                        {/* Pet Preview */}
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={petImageSrc}
+                            alt="Pet preview"
+                            className="h-16 w-16 object-contain"
+                          />
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between gap-2 text-xs font-normal" style={{ color: '#314479' }}>
+                              <span>Health</span>
+                              <span>HP {petHealth}</span>
+                            </div>
+                            <div className="h-3 w-32 overflow-hidden rounded-full" style={{ backgroundColor: '#cae0ee' }}>
+                              <div
+                                className="h-full transition-all"
+                                style={{ width: `${healthPercent}%`, backgroundColor: '#07d273' }}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="text-xs font-normal" style={{ color: '#5e9bd4' }}>Invite: {g.inviteCode}</div>
+                        <div className="text-xs font-normal" style={{ color: '#5e9bd4' }}>Invite: {g.inviteCode}</div>
                       </Link>
                     </div>
                   )
