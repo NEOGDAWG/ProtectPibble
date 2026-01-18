@@ -27,6 +27,18 @@ def _ensure_sqlite_schema() -> None:
     if engine.url.get_backend_name() == "sqlite":
         Base.metadata.create_all(bind=engine)
         ensure_sqlite_columns(engine)
+    else:
+        # For PostgreSQL, try to run migrations automatically on startup
+        # This helps when Shell access is not available (e.g., free tier)
+        try:
+            from alembic.config import Config
+            from alembic import command
+            
+            alembic_cfg = Config("alembic.ini")
+            command.upgrade(alembic_cfg, "head")
+        except Exception:
+            # If migrations fail, continue anyway - tables might already exist
+            pass
 
 app.include_router(api_router)
 
