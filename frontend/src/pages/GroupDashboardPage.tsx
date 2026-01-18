@@ -67,6 +67,7 @@ function formatLocalDateTime(iso: string) {
     }
     
     // Convert UTC to PST/PDT using Intl.DateTimeFormat
+    // Use formatToParts to get precise control over the output
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/Los_Angeles',
       month: 'short',
@@ -78,13 +79,21 @@ function formatLocalDateTime(iso: string) {
       timeZoneName: 'short',
     })
     
-    // Format the date - converts from UTC to PST/PDT
-    const formatted = formatter.format(d)
+    // Get all parts
+    const parts = formatter.formatToParts(d)
     
-    // Remove seconds if present
-    const cleaned = formatted.replace(/:\d{2}\s/, ' ')
+    // Extract each component
+    const month = parts.find(p => p.type === 'month')?.value || ''
+    const day = parts.find(p => p.type === 'day')?.value || ''
+    const year = parts.find(p => p.type === 'year')?.value || ''
+    const hour = parts.find(p => p.type === 'hour')?.value || ''
+    const minute = parts.find(p => p.type === 'minute')?.value || ''
+    const dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value?.toUpperCase() || ''
+    const timeZoneName = parts.find(p => p.type === 'timeZoneName')?.value || 'PST'
     
-    return cleaned
+    // Format: "Jan 15, 2024, 02:30 PM PST"
+    // Ensure minutes are always shown (2-digit format)
+    return `${month} ${day}, ${year}, ${hour}:${minute} ${dayPeriod} ${timeZoneName}`
   } catch (error) {
     // If anything fails, return original string
     return iso
