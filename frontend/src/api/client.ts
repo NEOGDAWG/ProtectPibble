@@ -23,17 +23,21 @@ async function apiFetch<TResponse>(
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
 
-  // Require JWT token - no demo auth fallback
-  const token = getAuthToken()
-  if (!token) {
-    throw new ApiError(
-      "Authentication required. Please login or register.",
-      401,
-      { detail: "Authentication required" }
-    )
+  // Auth endpoints don't require a token
+  const isAuthEndpoint = path === '/auth/login' || path === '/auth/register'
+  
+  // Require JWT token for all endpoints except auth
+  if (!isAuthEndpoint) {
+    const token = getAuthToken()
+    if (!token) {
+      throw new ApiError(
+        "Authentication required. Please login or register.",
+        401,
+        { detail: "Authentication required" }
+      )
+    }
+    headers.set('Authorization', `Bearer ${token.accessToken}`)
   }
-
-  headers.set('Authorization', `Bearer ${token.accessToken}`)
 
   let body: BodyInit | undefined = init?.body as BodyInit | undefined
   if (init?.json !== undefined) {
@@ -48,7 +52,7 @@ async function apiFetch<TResponse>(
 
   if (!res.ok) {
     // Handle 401 Unauthorized - token expired or invalid
-    if (res.status === 401 && path !== '/auth/login' && path !== '/auth/register') {
+    if (res.status === 401 && !isAuthEndpoint) {
       // Clear invalid token (but not for login/register endpoints)
       clearAuthToken()
       // Redirect to login will be handled by the component
