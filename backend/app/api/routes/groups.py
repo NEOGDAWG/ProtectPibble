@@ -170,14 +170,20 @@ def delete_group(
     user: CurrentUser = Depends(get_current_user),
 ) -> dict:
     """Delete a group. Only the creator can delete it."""
-    group = db.scalar(select(Group).where(Group.id == group_id))
+    import uuid
+    from fastapi import HTTPException, status
+    
+    try:
+        group_uuid = uuid.UUID(group_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid group ID format")
+    
+    group = db.scalar(select(Group).where(Group.id == group_uuid))
     if group is None:
-        from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
     
     # Only the creator can delete the group
     if group.created_by_id != user.id:
-        from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the group creator can delete the group")
     
     # Delete the group (cascade will handle related records)
