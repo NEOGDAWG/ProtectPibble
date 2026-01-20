@@ -50,7 +50,7 @@ To deploy online so multiple people can access it:
 
 Quick summary:
 - **Frontend**: Deploy to [Vercel](https://vercel.com) (free tier available)
-- **Backend + Database**: Deploy to [Railway](https://railway.app) - it provides both! (free tier available)
+- **Backend + Database**: Deploy to [Render](https://render.com/) - it provides both! (free tier available)
 
 The app supports multiple users joining the same class project via invite codes. Each group has shared tasks that everyone needs to complete to keep the pet healthy.
 
